@@ -1,0 +1,71 @@
+# Ghost Ink Road (game #4, bản thử lõi)
+
+Puzzle vẽ đường bằng mực, thế giới ma dễ thương, đi đường Poki. Phaser 4.2.1 + TypeScript, dựng bằng Vite, trên bộ khung `core/` chép từ game #1. Quyết định chung của dự án nằm trong `CLAUDE.md` (mục 5e). Thiết kế: `Game4-ThietKe.md` (v0) và `docs/Game4-DrawRoad_Brief_v1.md` (rà soát, đặc tả bản thử). Kết quả bản thử: `docs/Game4-DrawRoad_Report_v1.md`.
+
+Bản thử chỉ có 6 màn (1–5 và 10), đồ hoạ vẽ bằng code, chưa có xu, cửa hàng, SDK, quảng cáo, nhạc nền.
+
+## Cài đặt
+
+1. Node.js 22.12 trở lên (`node -v`).
+2. Trong thư mục này: `npm install`.
+
+## Lệnh
+
+| Lệnh | Việc |
+| --- | --- |
+| `npm run dev` | Chạy thử trên máy (không SDK). Điện thoại cùng Wi-Fi mở được link `Network` |
+| `npm run build:single` | Build web rồi gộp thành một file HTML để thử trên điện thoại: `dist/single/GhostInkRoad_PhoneTest_v1.html` |
+| `npm run build:web` | Build web vào `dist/web` |
+| `npm run build` | Build Poki vào `dist/poki` (chưa dùng ở bản thử) |
+| `npm run levelcheck` | Kiểm mọi màn bằng đúng vật lý của game (xem dưới). Thêm `-- --fix` để ghi lại T và B vào file màn, `-- --trace 5` để in đường đi của xe ở màn 5 |
+| `npm run tune` | Đo xe so với mục tiêu: tốc độ, dốc leo được, quãng bay, rơi tầng, độ êm trên nét mực |
+| `npm run typecheck` | Kiểm lỗi TypeScript |
+| `npm test` | Test của bộ khung |
+| `npm run sfx` | Tạo lại 8 tiếng hiệu ứng tạm trong `public/audio` (cần Python và numpy) |
+
+Không có lệnh `sync-core` ở repo này: bộ khung chỉ sửa ở game #1 rồi chép sang (quy ước trong `CLAUDE.md`). Chép sang đây bằng `npm run sync-core -- ../Game4_DrawRoad` chạy trong thư mục game #1.
+
+## Tham số thử nghiệm (bản web và file thử điện thoại)
+
+| Tham số | Tác dụng |
+| --- | --- |
+| `?level=5` | Mở thẳng màn 5 (id màn: 1, 2, 3, 4, 5, 10) |
+| `?debug` hoặc `#debug` | Hộp debug: fps, thời gian game mỗi khung, `sim ms/step` (vật lý mỗi bước). Trên điện thoại: chạm tên màn 5 lần |
+| `?inkturn` | Thử luật quay đầu phương án B: nét mực dựng đứng (dốc hơn 70°) cũng làm xe quay đầu |
+| `?reset` hoặc `#reset` | Xoá save thử (sao, kẹo, bước hướng dẫn) và nhật ký lượt thử giữ nguyên |
+| `?fixedres` | Tắt bộ tự hạ độ phân giải canvas |
+
+Nhật ký lượt thử: mỗi lần bấm GO ghi một dòng (màn, lần thử, số nét, mực, thời gian vẽ, thời gian chạy, kết quả, kẹo, sao). Lưu trên máy; xuất CSV bằng nút "Save test log" trong menu tạm dừng (nút ≡ góc trên, hoặc phím P).
+
+## Điều khiển
+
+- Vẽ: kéo ngón tay hoặc giữ chuột trái. Đầu và cuối nét tự hút vào mép đường trong bán kính 18.
+- GO: nút GO, Space hoặc Enter. Bấm lại khi xe đang chạy để dừng.
+- Hoàn tác nét cuối: nút ↶ hoặc Z. Xoá hết: giữ nút thùng rác 0,5 giây, hoặc R.
+- Tạm dừng: nút ≡ hoặc P (không dùng Esc vì Esc thoát toàn màn hình).
+- Màn 5: giữ GO để thấy vệt chấm dự đoán đường bay.
+
+## Cấu trúc
+
+| Thư mục | Nội dung |
+| --- | --- |
+| `core/` | Bộ khung chung (không sửa ở đây) |
+| `src/levels/*.json` | Mỗi màn một file: đường, vách quay đầu, khối đá, chỗ đứt, kẹo, mực B và T, lời giải mẫu |
+| `src/sim/` | Vật lý: `sim.ts` (thế giới Matter, xe, luật thắng thua, ván ma), `tuning.ts` (mọi hằng số vật lý và luật vẽ) |
+| `src/logic/` | Hình học, luật vẽ (chỗ không được vẽ, cắt nét, hút đầu nét), điểm mực chữ S |
+| `src/play/`, `src/ui/`, `src/render/` | Hiển thị: sân chơi, xe, nét mực, lọ mực, hình vẽ bằng code |
+| `src/scenes/PlayScene.ts` | Cả vòng chơi: vẽ, chạy, kết quả, menu, hướng dẫn |
+| `tools/` | `levelcheck.ts`, `tune.ts`, `matter.ts` (nạp đúng bản Matter.js của Phaser cho Node), `make_sfx.py` |
+
+Vật lý chạy bước cố định 1/60 giây, tách khỏi tốc độ khung hình; cùng nét vẽ thì cùng kết quả. Game dùng `Phaser.Physics.Matter.Matter`, công cụ Node nạp cùng file nguồn trong gói `phaser`, nên `levelcheck` chạy đúng vật lý của game.
+
+## levelcheck kiểm gì
+
+1. Lời giải mẫu thắng và nhặt đủ kẹo.
+2. T = mực của lời giải mẫu × 1,10; B = T × hệ số B/T của màn (bảng 6.2 của v0).
+3. Không vẽ gì thì thua.
+4. Màn 1–4: nét thẳng nối mép mọi chỗ đứt thì thắng.
+5. Bỏ trống từng chỗ đứt thì thua (mỗi chỗ đứt đều cần mực).
+6. Lời giải mẫu có nhiễu ±2 đơn vị mỗi điểm: thắng ít nhất 95/100.
+7. Chạy lại cùng nét cho đúng cùng kết quả.
+8. Các kiểm riêng từng màn (ví dụ màn 5: nét thẳng bị bia mộ cắt thì thua; màn 10: vẽ đè ván ma vẫn thắng).

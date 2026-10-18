@@ -1,0 +1,43 @@
+{
+  "game": {
+    "level": "Level {n}",
+    "go": "GO",
+    "stop": "Stop",
+    "next": "Next",
+    "replay": "Replay",
+    "restart": "Restart level",
+    "restartShort": "Restart",
+    "levels": "Levels",
+    "levelClear": "Home sweet home!",
+    "score": "Score {n}",
+    "perfectInk": "Perfect ink!",
+    "lessInk": "Use {n} less ink for 3 stars",
+    "lessInk2": "Use {n} less ink for 2 stars",
+    "candy": "Candy {n}/{m}",
+    "allDone": "That's every level in this test. Thanks for playing!",
+    "noInk": "Out of ink!",
+    "boo": "Boo!",
+    "why": {
+      "fall": "Fell off the road",
+      "flip": "Flipped over",
+      "stuck": "Got stuck",
+      "timeout": "Took too long",
+      "stopped": "Stopped"
+    },
+    "tip": {
+      "draw": "Draw the road!",
+      "go": "Tap GO!",
+      "multi": "Fix every gap",
+      "candy": "Grab the candy!",
+      "par": "Save ink: stay past the gold mark",
+      "jump": "Draw a ramp. Hold GO to aim",
+      "ghost": "Ghost planks blink!",
+      "ghostSub": "Watch when they vanish",
+      "tapToStart": "Tap to start"
+    },
+    "holdToClear": "Hold to clear",
+    "exportLog": "Save test log",
+    "logSaved": "Test log saved",
+    "paused": "Paused"
+  }
+}
