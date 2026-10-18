@@ -29,7 +29,7 @@ Không có lệnh `sync-core` ở repo này: bộ khung chỉ sửa ở game #1 
 
 | Tham số | Tác dụng |
 | --- | --- |
-| `?level=5` | Mở thẳng màn 5 (id màn: 1, 2, 3, 4, 5, 10) |
+| `?level=5` hoặc `#l5` | Mở thẳng màn 5 (id màn: 1, 2, 3, 4, 5, 10). Trang artifact bỏ phần `?`, nên ở đó dùng dạng `#` |
 | `?debug` hoặc `#debug` | Hộp debug: fps, thời gian game mỗi khung, `sim ms/step` (vật lý mỗi bước). Trên điện thoại: chạm tên màn 5 lần |
 | `?inkturn` | Thử luật quay đầu phương án B: nét mực dựng đứng (dốc hơn 70°) cũng làm xe quay đầu |
 | `?reset` hoặc `#reset` | Xoá save thử (sao, kẹo, bước hướng dẫn) và nhật ký lượt thử giữ nguyên |
