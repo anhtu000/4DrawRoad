@@ -3,7 +3,7 @@
 //   run:    the simulation steps at a fixed 60 Hz; no drawing
 //   end:    short win or fail animation, then result panel (win) or back to edit (fail)
 import Phaser from 'phaser';
-import { app, BaseScene, burst, Button, DebugOverlay, floatText, formatNumber, icons, Panel, shapeImage, soundButton, toast, type ViewportInfo } from '@core';
+import { app, BaseScene, burst, Button, DebugOverlay, floatText, icons, Panel, shapeImage, soundButton, toast, type ViewportInfo } from '@core';
 import { LEVELS, levelById, nextLevel } from '../levels/index.ts';
 import { dist } from '../logic/geom.ts';
 import { finishStroke, forbidden, inkUsed, inkZones, snapPoint, type InkZones } from '../logic/ink.ts';
@@ -586,6 +586,7 @@ export class PlayScene extends BaseScene {
       const sc = levelScore(used, this.level.ink.par, this.level.ink.budget, this.runCandies.length);
       this.logAttempt('win', sim.steps, sc.stars);
       app.gameplay.stop();
+      this.setGoMode(false);
       const { house } = this.level;
       this.car.enterHouse(house.x, house.y);
       app.audio.play('win');
@@ -708,7 +709,7 @@ export class PlayScene extends BaseScene {
       c.add(st);
       this.tweens.add({ targets: st, scale: full, delay: 200 + i * 180, duration: 320, ease: 'Back.Out', onStart: () => on && app.audio.play('pop', { detune: i * 300 }) });
     }
-    c.add(this.text(0, top + y.score, app.t('game.score', { n: formatNumber(sc.total) }), 44, TEXT.gold).setOrigin(0.5));
+    c.add(this.text(0, top + y.score, app.t('game.score', { n: sc.total.toLocaleString('en-US') }), 44, TEXT.gold).setOrigin(0.5));
     const { InkJar } = jarModule;
     const jar = new InkJar(this, 300);
     jar.setLevel(level.ink.par, level.ink.budget);
@@ -804,8 +805,17 @@ export class PlayScene extends BaseScene {
           color: app.theme.surface,
           textColor: '#ffffff',
           onClick: () => {
-            telemetry.download();
-            toast(this, app.t('game.logSaved'), 1400);
+            // Copy first: artifact pages block downloads, but the clipboard works from a tap. The
+            // tester pastes the CSV into a note or a chat. Plain browsers also get the file.
+            const n = telemetry.rows.length;
+            const saved = () => toast(this, app.t('game.logSaved', { n }), 1800);
+            navigator.clipboard
+              ?.writeText(telemetry.csv())
+              .then(() => toast(this, app.t('game.logCopied', { n }), 1800))
+              .catch(() => {
+                telemetry.download();
+                saved();
+              }) ?? (telemetry.download(), saved());
           },
         }),
       );

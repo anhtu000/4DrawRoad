@@ -36,8 +36,9 @@
       "tapToStart": "Tap to start"
     },
     "holdToClear": "Hold to clear",
-    "exportLog": "Save test log",
-    "logSaved": "Test log saved",
+    "exportLog": "Copy test log",
+    "logSaved": "Test log saved ({n} rows)",
+    "logCopied": "Test log copied ({n} rows). Paste it in a message",
     "paused": "Paused"
   }
 }
