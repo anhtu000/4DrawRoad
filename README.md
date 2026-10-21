@@ -1,6 +1,6 @@
 # Ghost Ink Road (game #4, bản thử lõi)
 
-Puzzle vẽ đường bằng mực, thế giới ma dễ thương, đi đường Poki. Phaser 4.2.1 + TypeScript, dựng bằng Vite, trên bộ khung `core/` chép từ game #1. Quyết định chung của dự án nằm trong `CLAUDE.md` (mục 5e). Thiết kế: `Game4-ThietKe.md` (v0) và `docs/Game4-DrawRoad_Brief_v1.md` (rà soát, đặc tả bản thử). Kết quả bản thử: `docs/Game4-DrawRoad_Report_v1.md`.
+Puzzle vẽ đường bằng mực, thế giới ma dễ thương, đi đường Poki. Phaser 4.2.1 + TypeScript, dựng bằng Vite, trên bộ khung `core/` chép từ game #1. Quyết định chung của dự án nằm trong `CLAUDE.md` (mục 5e). Thiết kế: `Game4-ThietKe.md` (v0) và `docs/Game4-DrawRoad_Brief_v1.md` (rà soát, đặc tả bản thử). Kết quả bản thử: `docs/Game4-DrawRoad_Report_v2.md` (v2 thêm chơi thử đợt 1, màn bị rò, xe mới).
 
 Bản thử chỉ có 6 màn (1–5 và 10), đồ hoạ vẽ bằng code, chưa có xu, cửa hàng, SDK, quảng cáo, nhạc nền.
 
@@ -18,6 +18,7 @@ Bản thử chỉ có 6 màn (1–5 và 10), đồ hoạ vẽ bằng code, chưa
 | `npm run build:web` | Build web vào `dist/web` |
 | `npm run build` | Build Poki vào `dist/poki` (chưa dùng ở bản thử) |
 | `npm run levelcheck` | Kiểm mọi màn bằng đúng vật lý của game (xem dưới). Thêm `-- --fix` để ghi lại T và B vào file màn, `-- --trace 5` để in đường đi của xe ở màn 5 |
+| `npm run cheapest` | Tìm cách thắng rẻ mực nhất cho từng màn (cắt bớt nét, dốc ngắn ở mép) để kiểm mức chuẩn T có quá dễ không. Chạy vài phút |
 | `npm run tune` | Đo xe so với mục tiêu: tốc độ, dốc leo được, quãng bay, rơi tầng, độ êm trên nét mực |
 | `npm run typecheck` | Kiểm lỗi TypeScript |
 | `npm test` | Test của bộ khung |
@@ -53,7 +54,9 @@ Nhật ký lượt thử: mỗi lần bấm GO ghi một dòng (màn, lần th�
 | `src/levels/*.json` | Mỗi màn một file: đường, vách quay đầu, khối đá, chỗ đứt, kẹo, mực B và T, lời giải mẫu |
 | `src/sim/` | Vật lý: `sim.ts` (thế giới Matter, xe, luật thắng thua, ván ma), `tuning.ts` (mọi hằng số vật lý và luật vẽ) |
 | `src/logic/` | Hình học, luật vẽ (chỗ không được vẽ, cắt nét, hút đầu nét), điểm mực chữ S |
-| `src/play/`, `src/ui/`, `src/render/` | Hiển thị: sân chơi, xe, nét mực, lọ mực, hình vẽ bằng code |
+| `src/play/`, `src/ui/`, `src/render/` | Hiển thị: sân chơi, xe, nét mực, lọ mực, hình vẽ bằng code. Xe và Lumi: `src/render/car.ts` (hình), `src/play/CarView.ts` (ghép và chuyển động) |
+| `tools/carsheet/` | Bảng mẫu xe: `npm run dev` rồi mở `/tools/carsheet/index.html` |
+| `local-sync/` | File chung của dự án chờ chép về máy (xem README trong đó) |
 | `src/scenes/PlayScene.ts` | Cả vòng chơi: vẽ, chạy, kết quả, menu, hướng dẫn |
 | `tools/` | `levelcheck.ts`, `tune.ts`, `matter.ts` (nạp đúng bản Matter.js của Phaser cho Node), `make_sfx.py` |
 
