@@ -575,6 +575,7 @@ export class PlayScene extends BaseScene {
       this.refreshHud();
     } else if (e.type === 'turn') {
       app.audio.play('turn', { volume: 0.6 });
+      this.car.turned();
     }
   }
 
