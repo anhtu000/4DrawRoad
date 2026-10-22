@@ -57,8 +57,20 @@ export interface LevelDef {
   candies: Pt[];
   /** Ink budget B and par T, in field units of line length. */
   ink: { budget: number; par: number };
-  /** Reference solution that wins and collects every candy (levelcheck runs it). */
+  /**
+   * How par T is set (decision 22/10, CLAUDE.md 5e):
+   *   patch     levels 1-3: T = the reference solution (patch every gap) x 1.1; levelcheck fails if
+   *             a much cheaper win exists (the level leaks)
+   *   cheapest  from level 4: T = the cheapest robust win found by tools/search.ts that collects
+   *             every candy (`best`) x 1.1; the budget still leaves room for the obvious solution
+   */
+  parRule: 'patch' | 'cheapest';
+  /** Reference solution that wins and collects every candy: the obvious way a new player patches it. */
   solution: Pt[][];
+  /** Other known wins (all candy). The search starts from these too. */
+  alt?: Pt[][][];
+  /** Cheapest robust win found (parRule 'cheapest'); written by levelcheck --fix. */
+  best?: Pt[][];
   /** Dotted gap hints: 1 = full, below 1 fades them (from level 10, brief 3.3). */
   hintAlpha?: number;
   tutorial?: TutorialKind;
