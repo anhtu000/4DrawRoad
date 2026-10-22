@@ -842,7 +842,8 @@ export class PlayScene extends BaseScene {
     this.tweens.add({ targets: this.coachText, scale: 1.06, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
     this.coach.push(this.coachText);
     if (kind === 'draw' || kind === 'jump') {
-      const line = kind === 'draw' ? [this.level.gaps[0].a, this.level.gaps[0].b] : this.level.solution[0];
+      // Level 5 teaches the ramp: its reference solution is the obvious arch, the ramp is in `alt`.
+      const line = kind === 'draw' ? [this.level.gaps[0].a, this.level.gaps[0].b] : (this.level.alt?.[0] ?? this.level.solution)[0];
       this.handDemo(line as Pt[]);
     }
     if (kind === 'multi') for (const h of this.field.hints) this.coachPulse(h);
