@@ -4,10 +4,10 @@ Ngày 22/10 chat không truy cập được máy tính, nên theo lời người
 
 | File trong repo | Chép tới |
 | --- | --- |
-| `local-sync/CLAUDE.md` (v6) | `D:\Projects\GameMaking\CLAUDE.md` (ghi đè v4 hoặc v5 đang có) |
+| `local-sync/CLAUDE.md` (v7) | `D:\Projects\GameMaking\CLAUDE.md` (ghi đè v4 hoặc v5 đang có) |
 | `local-sync/CLAUDE-history/*` | `D:\Projects\GameMaking\docs\CLAUDE-history\` (tạo thư mục nếu chưa có) |
 
-Bản trong project trên claude.ai (`claude/CLAUDE.md`) đã là v6, nên sau khi chép thì hai bản giống nhau.
+Bản trong project trên claude.ai (`claude/CLAUDE.md`) đã là v7, nên sau khi chép thì hai bản giống nhau.
 
 Chép xong có thể xoá thư mục `local-sync/` trong repo (commit việc xoá), để repo game #4 chỉ còn file của game.
 

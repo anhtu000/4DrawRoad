@@ -1,6 +1,6 @@
 # CLAUDE.md – Project "Game Making"
 
-Phiên bản v6, 22/10/2026. v5 là bản gộp của hai bản bị sửa riêng từ 14/10 đến 19/10: bản trong project trên claude.ai (chat game #1 ghi việc CrazyGames từ chối game #1) và bản trên máy (chat game #2, #3, #4); v6 thêm kết quả chơi thử đợt 1 và xe mới của game #4. Nhật ký thay đổi và danh sách phiên bản cũ ở mục 12. Khi một quyết định thay đổi, sửa file này trước khi làm tiếp, sửa cả hai bản và tăng số phiên bản (mục 2).
+Phiên bản v7, 22/10/2026. v7: người dùng chọn cách sửa màn bị rò của game #4 (mục 5e). v5 là bản gộp của hai bản bị sửa riêng từ 14/10 đến 19/10: bản trong project trên claude.ai (chat game #1 ghi việc CrazyGames từ chối game #1) và bản trên máy (chat game #2, #3, #4); v6 thêm kết quả chơi thử đợt 1 và xe mới của game #4. Nhật ký thay đổi và danh sách phiên bản cũ ở mục 12. Khi một quyết định thay đổi, sửa file này trước khi làm tiếp, sửa cả hai bản và tăng số phiên bản (mục 2).
 
 ## 1. Mục tiêu
 
@@ -59,7 +59,7 @@ Không chi tiền mua người chơi (UA). Portal mang người chơi đến. K�
 | Hình ảnh game #1 | Đã chốt (11/10) | Vẽ gần như toàn bộ bằng code (thiên thể, nền sao và tinh vân, UI). Asset CC0 chỉ dùng cho icon nhỏ nếu thiếu, ghi vào `ASSETS.md` |
 | Game #2 | Đã chốt | Tycoon 2D: quán cozy do thú cute vận hành, có sưu tầm thú, cho 13+ (mục 5). Chủ đề thay thế: văn phòng / cửa hàng thường. Dự phòng nếu tycoon quá sức: câu cá nâng cấp 2D |
 | Game #3 | Đã chọn (14/10), thiết kế v0 chưa chốt số | Câu cá + ấp trứng ra thú, cozy, tên tạm Pond Pals: Hatch & Fish (mục 5d). Đường A, Poki (chọn 14/10, mục 5d); bắt đầu sau khi nộp game #2 |
-| Game #4 | Đã chọn (19/10), bản thử lõi xong (19/10), chơi thử đợt 1 (21/10) cho thấy màn bị "rò", chờ người dùng chọn cách sửa (mục 5e) | Puzzle vẽ đường bằng mực một màn hình, thế giới ma dễ thương, 20 màn; tên tạm Ghost Ink Road (mục 5e). Đường A, Poki (người dùng chọn 19/10) |
+| Game #4 | Đã chọn (19/10), bản thử lõi xong (19/10), chơi thử đợt 1 (21/10) cho thấy màn bị "rò"; cách sửa chốt 22/10: màn 1–3 vá kín, từ màn 4 mức chuẩn theo cách rẻ nhất (mục 5e) | Puzzle vẽ đường bằng mực một màn hình, thế giới ma dễ thương, 20 màn; tên tạm Ghost Ink Road (mục 5e). Đường A, Poki (người dùng chọn 19/10) |
 | Portal ngoài Poki, CrazyGames, Y8 | Đã chốt (14/10) | Đường B thêm YouTube Playables (gửi form early access) và một mạng phân phối (GameDistribution hoặc GameMonetize). Không làm itch.io, Newgrounds, Armor Games, Kongregate, Discord Activities (mục 1) |
 | Chọn đường trước khi code | Đã chốt (14/10) | Mỗi game: nghiên cứu, đề xuất đường A hay B, người dùng quyết định, rồi mới dựng SDK theo đường đó (mục 2) |
 | Engine | Đã chốt | Phaser 4 + TypeScript, dựng bằng Vite |
@@ -551,11 +551,21 @@ Chơi thử đợt 1 (người dùng, tối 21/10, một người, 6 màn; phân
 - Thắng 6/6 màn với 7 lượt thử (chỉ thua 1 lần ở màn 5); 5 màn được 3 sao ngay lượt đầu. Màn 1–5 mất khoảng 4 phút 50 giây (mục tiêu khoảng 3 phút), chủ yếu do thời gian vẽ ở màn 4 (84 giây) và lượt 2 màn 5 (90 giây).
 - Mực dùng so với mức chuẩn T: màn 2, 3, 4, 10 chỉ 56–72% T; màn 1 112%; màn 5 171% (1 sao). Kẹo: 4/9, bỏ qua kẹo vẫn 3 sao.
 - **Phát hiện chính (sự thật, đo bằng `npm run cheapest`):** cả 6 màn đều thắng được với rất ít mực. Một miếng mực 20–30 đơn vị ở mép chỗ đứt (hoặc dốc nhỏ 30 đơn vị) đủ cho màn 1 (T 132); các màn khác thắng với 54–90 mực (T 238–488), phần lớn vẫn đủ kẹo. Lý do: chỗ đứt rộng 120 chỉ hơn khoảng 1,8 lần khoảng cách hai bánh, xe tự vượt được khoảng 100 đơn vị nhờ đà và thân dài; vá một mẩu ở mép là đủ. Tăng trọng lực lên 700 hay 900 không sửa được (màn 1 vẫn 24 mực). Vì T lấy từ lời giải mẫu vá kín cả chỗ đứt, gần như ai cũng được 3 sao và sao không còn là thử thách.
-- Chờ người dùng chọn hướng sửa: (A) T lấy từ lời giải rẻ nhất mà máy tìm được, thử thách thành "tìm cách vá ít mực nhất"; (B) giữ "vá kín chỗ đứt", sửa luật dựng màn (chỗ đứt rộng gấp 2,5–3 lần xe, mép đáp cao hơn mép đi, chỗ đứt ngay sau vách quay đầu để xe chưa có đà, xe chậm hơn); (C) kết hợp: màn 1–5 dựng theo B để hướng dẫn rõ, từ màn 6 dùng T của A. Claude đề xuất C. Dù chọn hướng nào, `npm run cheapest` sẽ là một bước bắt buộc của levelcheck.
+- **Cách sửa, người dùng chốt 22/10 (biến thể của hướng C mà Claude đề xuất):**
+  - **Màn 1–3 theo hướng B ("vá kín"):** dựng màn sao cho cách rẻ nhất gần bằng lời giải vá kín chỗ đứt, để bàn tay ma vẽ mẫu và viền chấm gợi ý luôn đúng. Luật dựng: chỗ đứt nằm ngay sau điểm xuất phát hoặc vách quay đầu (xe chưa có đà), mép đáp cao hơn mép đi, chỗ đứt rộng hơn ngưỡng xe tự vượt. Không đổi vật lý chung. T = lời giải mẫu × 1,1 như cũ; levelcheck báo lỗi nếu cách rẻ nhất tìm được (cắt ngắn đầu nét hoặc chừa một lỗ) dưới 65% lời giải mẫu.
+  - **Từ màn 4 theo hướng A ("ít mực nhất"):** T = cách rẻ nhất tìm được mà vẫn đủ kẹo và vẫn thắng khi tay run nhẹ, × 1,1. Ngân sách B không nhỏ hơn lời giải vá kín × 1,15, để người mới vẫn thắng (1 sao) rồi được mời thử lại với ít mực hơn (mức này do Claude chọn). Màn 4 có gợi ý vạch vàng sẵn, dùng làm chỗ chuyển luật.
+  - Cả hai luật đều dùng công cụ tìm cách rẻ nhất trong levelcheck.
 - Xe mới (22/10, người dùng: xe cũ quá đơn giản): Pumpkin Buggy vẽ bằng code, gồm vỏ bí ngô có gân và mắt to biết chớp (v0 mục 7.1), buồng lái có Lumi (giọt ma có chóp vuốt ra sau, khăn quàng sọc cam bay theo tốc độ), dây leo ăng-ten lắc theo gia tốc, đèn cản trước có vệt sáng, ống xả phả khói ma, bánh to có gai, vè bánh; xe nhún khi đáp đất và khi quay đầu. Chỉ là hình, không đổi vật lý (khung va chạm và vòng tròn nhặt kẹo của Lumi giữ nguyên). Bản thử điện thoại v2 có xe mới.
 - Chỉ có một người thử, nên H1, H3, H4, H7 vẫn chưa có số liệu.
 
-Việc tiếp theo: người dùng chọn A, B hoặc C; Claude dựng lại 6 màn theo hướng đã chọn và thêm `cheapest` vào levelcheck; sau đó cho 3–5 người chơi theo mục 6 của báo cáo v1.
+Kết quả sửa (chiều 22/10, chi tiết ở mục 12 của `docs/Game4-DrawRoad_Report_v3.md`):
+
+- Màn 1–3 dựng lại: mỗi chỗ đứt có mép đáp cao hơn mép đi, dốc 33–35°; dưới mỗi chỗ đứt trống tới đáy. Cách rẻ nhất còn 80%, 70%, 81% lời giải vá kín (chỗ đứt phẳng hay đặt sát điểm xuất phát đều không chặn được rò). Màn 2 xe xuất phát sát vách quay đầu; màn 3 kẹo nằm trên tầng trên, lấy bằng một dốc nhỏ vẽ trên mặt đường. Một nét chấm nhiều lỗ nhỏ vẫn thắng màn 2 với khoảng 51% mực nhưng cũng chỉ 3 sao như vá kín, nên không chặn.
+- Màn 4, 5, 10: T = 51, 130, 72 (cách rẻ nhất 47, 118, 65 mực, đều thắng từ 90/100 lần có nhiễu ±2); B = 476, 508, 700. Vá kín được 1 sao; 3 sao cần dưới 127, 197, 184 mực. Màn 5 nới chỗ đứt 2 từ 120 lên 150 (cầu vòng tự vượt được chỗ 120); cách rẻ nhất của màn 5 chính là dốc nhảy, đúng bài của màn.
+- `tools/search.ts` chạy trong levelcheck (khoảng 2 phút cả 6 màn); bản thử điện thoại v3 (artifact cũ, cùng link).
+- Rủi ro (ý kiến): từ màn 4 khó lên 3 sao hơn hẳn; đo tỉ lệ 3 sao khi chơi thử, quá thấp thì nới T (ví dụ × 1,3) hoặc thêm gợi ý ở màn 4.
+
+Việc tiếp theo: cho 3–5 người chơi bản thử v3 theo mục 6 của báo cáo v1, ghi thêm tỉ lệ 3 sao từ màn 4.
 
 ## 6. Yêu cầu kỹ thuật bắt buộc của portal
 
@@ -665,8 +675,8 @@ Phần này không phải tư vấn pháp lý hay thuế.
 - Tài liệu thiết kế game #4 v0 (15/10): `D:\Projects\GameMaking\Game4_DrawRoad\Game4-ThietKe.md`
 - Rà soát v0 và đặc tả bản thử lõi game #4 (19/10): `D:\Projects\GameMaking\Game4_DrawRoad\docs\Game4-DrawRoad_Brief_v1.md`
 - Kết quả bản thử lõi game #4 (19/10): `D:\Projects\GameMaking\Game4_DrawRoad\docs\Game4-DrawRoad_Report_v1.md`
-- Kết quả chơi thử đợt 1 và phát hiện màn bị rò, game #4 (22/10): `docs/Game4-DrawRoad_Report_v2.md` trong repo game #4
-- Bản thử lõi game #4 (mở trên điện thoại; `#l5` mở thẳng màn 5, `#debug` hiện hộp debug, `#reset` chơi lại từ đầu; từ 22/10 có xe mới): https://claude.ai/artifact/N5P9yExgXfkiBozM9p53pJ (file một trang: `builds/GhostInkRoad_PhoneTest_v2.html` trong repo game #4)
+- Kết quả chơi thử đợt 1, màn bị rò, xe mới, hai luật mức chuẩn và 6 màn sửa lại, game #4 (22/10): `docs/Game4-DrawRoad_Report_v3.md` trong repo game #4 (v2 không có phần sửa màn)
+- Bản thử lõi game #4 (mở trên điện thoại; `#l5` mở thẳng màn 5, `#debug` hiện hộp debug, `#reset` chơi lại từ đầu; từ 22/10 có xe mới): https://claude.ai/artifact/N5P9yExgXfkiBozM9p53pJ (file một trang: `builds/GhostInkRoad_PhoneTest_v3.html` trong repo game #4; từ chiều 22/10 có 6 màn sửa lại)
 - Repo game #4: https://github.com/anhtu000/4DrawRoad (thư mục trên máy: `D:\Projects\GameMaking\Game4_DrawRoad`)
 - Bản build thử bộ khung (mở trên điện thoại): https://claude.ai/artifact/NjCx8L3YREeeLDNUQMQZY3
 - Mô phỏng kinh tế game #1 (dựng lại bằng `npm run sim` và `npm run sim:report` trong repo): https://claude.ai/artifact/LVGTE1Q9dbUCFqifUJHByN
@@ -789,7 +799,8 @@ Bản cũ lưu ở `D:\Projects\GameMaking\docs\CLAUDE-history\`. Trước v5 fi
 | v3 | 19/10, 01:07 | Máy | v2 cộng rà soát và quyết định game #4 (5e) | `CLAUDE_v3.md` |
 | v4 | 19/10, 03:19 | Máy | v3 cộng kết quả bản thử lõi game #4 | `CLAUDE_v4.md` |
 | v5 | 22/10 | Cả hai | Gộp v1 và v4; thêm quy tắc giữ hai bản giống nhau (mục 2) và mục 12 | `CLAUDE_v5.md` |
-| v6 | 22/10 | Project; bản trên máy chờ người dùng chép từ `local-sync/` của repo game #4 | Kết quả chơi thử đợt 1 game #4, phát hiện màn bị rò, xe mới, quy tắc GitHub khi không truy cập được máy | `CLAUDE_v6.md` |
+| v6 | 22/10 | Project, `local-sync/` | Kết quả chơi thử đợt 1 game #4, phát hiện màn bị rò, xe mới, quy tắc GitHub khi không truy cập được máy | `CLAUDE_v6.md` |
+| v7 | 22/10 | Project; bản trên máy chờ người dùng chép từ `local-sync/` của repo game #4 | Cách sửa màn bị rò của game #4 (màn 1–3 vá kín, từ màn 4 mức chuẩn theo cách rẻ nhất) và kết quả sửa | `CLAUDE_v7.md` |
 
 Ghi chú về v1: Claude không tải được file gốc từ project, nên `CLAUDE_v1.md` được ghép lại: đầu file, mục 1–4, mục 10 và mục 11 chép nguyên văn từ bản project; các mục còn lại lấy từ bản trên máy sau khi so khớp câu cho thấy hai bản giống nhau ở các mục đó. Trong v1 có 3 chỗ chỉ bản project có, đều đã đưa vào v5: dòng "Hướng dẫn đầu game" ở mục 3, cột kết quả dòng "T5 15/10" ở mục 11 (bị từ chối), và 3 mục "Sửa sau khi bị từ chối, ngày 1", "ngày 2", "CrazyGames từ chối game #1" ở mục 11. Những chỗ v1 cũ hơn bản trên máy (dòng "Lớp SDK", dòng "T5–CN 15–18/10", dòng đầu file) lấy theo bản trên máy.
 
@@ -819,3 +830,4 @@ Trước v5, nhật ký nằm ở dòng đầu file. Chuyển nguyên ý xuống
 | Rạng sáng 19/10 | Thiết kế game #4 | Xong bản thử lõi, chờ chơi thử bằng người thật | 5e, 10 | Máy |
 | 22/10 | Thiết kế game #4 | v5: gộp hai bản; thêm quy tắc giữ hai bản giống nhau; chuyển nhật ký xuống mục 12; ghi chú ở 4.2 và 4b rằng game #1 đã bỏ hướng dẫn bắt buộc ngày 19/10 | Đầu file, 2, 3, 4.2, 4b, 11, 12 | Cả hai |
 | 22/10 | Thiết kế game #4 | v6: kết quả chơi thử đợt 1 (màn bị rò: vá một mẩu mực ở mép là thắng), ba hướng sửa chờ người dùng chọn; xe mới Pumpkin Buggy; repo GitHub game #4; quy tắc giữ file trên cloud và đẩy GitHub khi không truy cập được máy | Đầu file, 3, 5e, 10, 11, 12 | Project (bản trên máy qua GitHub) |
+| Chiều 22/10 | Thiết kế game #4 | v7: người dùng chọn cách sửa màn bị rò: màn 1–3 theo hướng B (vá kín), từ màn 4 theo hướng A (T theo cách rẻ nhất); B không nhỏ hơn lời giải vá kín × 1,15; kết quả dựng lại 6 màn | Đầu file, 3, 5e, 10, 12 | Project (bản trên máy qua GitHub) |
