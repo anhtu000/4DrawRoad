@@ -56,7 +56,6 @@ Nhật ký lượt thử: mỗi lần bấm GO ghi một dòng (màn, lần th�
 | `src/logic/` | Hình học, luật vẽ (chỗ không được vẽ, cắt nét, hút đầu nét), điểm mực chữ S |
 | `src/play/`, `src/ui/`, `src/render/` | Hiển thị: sân chơi, xe, nét mực, lọ mực, hình vẽ bằng code. Xe và Lumi: `src/render/car.ts` (hình), `src/play/CarView.ts` (ghép và chuyển động) |
 | `tools/carsheet/` | Bảng mẫu xe: `npm run dev` rồi mở `/tools/carsheet/index.html` |
-| `local-sync/` | File chung của dự án chờ chép về máy (xem README trong đó) |
 | `src/scenes/PlayScene.ts` | Cả vòng chơi: vẽ, chạy, kết quả, menu, hướng dẫn |
 | `tools/` | `levelcheck.ts`, `tune.ts`, `matter.ts` (nạp đúng bản Matter.js của Phaser cho Node), `make_sfx.py` |
 
