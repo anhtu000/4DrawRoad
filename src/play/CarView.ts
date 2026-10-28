@@ -169,6 +169,16 @@ export class CarView {
     this.wasGrounded = this.cur.grounded;
   }
 
+  /** The car went through a mirror: show it at its new place without sliding there. */
+  snap() {
+    this.prev = this.cur;
+    for (const p of this.puffs) {
+      p.life = 0;
+      p.img.setVisible(false);
+    }
+    this.bounce(1.15, 0.85);
+  }
+
   /** The car turned at a wall: a quick squash so the flip reads as a move, not a glitch. */
   turned() {
     this.bounce(0.86, 1.1);

@@ -273,6 +273,7 @@ export class PlayScene extends BaseScene {
     this.runCandies = [];
     this.car.setStart(this.level.car.x, this.level.car.y, this.level.car.dir);
     this.field.resetCandies();
+    this.field.resetMechanics();
     this.setGoMode(false);
     this.editStart = this.time.now;
     this.outOfInkShown = false;
@@ -534,6 +535,7 @@ export class PlayScene extends BaseScene {
         const phase = (((t + (g.offset ?? 0)) % cycle) + cycle) % cycle;
         this.field.setPlank(v, phase < g.on);
       });
+      this.field.setMechTime(t);
       this.car.idle(time, true);
       return;
     }
@@ -560,10 +562,11 @@ export class PlayScene extends BaseScene {
     this.car.apply(Math.min(1, this.acc / STEP_MS));
     this.car.idle(time, false);
     this.field.planks.forEach((v, i) => this.field.setPlank(v, sim.ghostVisible(i)));
+    this.field.setMechTime(sim.time + Math.min(1, this.acc / STEP_MS) / 60);
     if (sim.result) this.onRunEnd(sim.result.outcome);
   }
 
-  private onSimEvent(e: { type: string; index?: number; x?: number; y?: number }) {
+  private onSimEvent(e: { type: string; index?: number; x?: number; y?: number; gate?: number }) {
     if (e.type === 'candy' && e.index !== undefined) {
       this.runCandies.push(e.index);
       const img = this.field.candies[e.index];
@@ -576,6 +579,26 @@ export class PlayScene extends BaseScene {
     } else if (e.type === 'turn') {
       app.audio.play('turn', { volume: 0.6 });
       this.car.turned();
+    } else if (e.type === 'bounce' && e.index !== undefined) {
+      this.field.bounce(e.index);
+      const pk = this.level.pumpkins![e.index];
+      burst(this, ...this.field.toScreen([pk.x, pk.y - 40]), C.pumpkin, 12, 360);
+      app.audio.play('go', { volume: 0.6, detune: 500 });
+      app.haptic(15);
+    } else if (e.type === 'teleport' && e.index !== undefined) {
+      // The car jumps from one mirror to the other: no in-between frame.
+      this.car.snap();
+      this.field.mirrorFlash(e.index);
+      const m = this.level.mirrors![e.index];
+      burst(this, ...this.field.toScreen([m.a[0], m.a[1] - 50]), 0x7fd8ff, 14, 320);
+      burst(this, ...this.field.toScreen([m.b[0], m.b[1] - 50]), 0x7fd8ff, 14, 320);
+      app.audio.play('pop', { volume: 0.8, detune: -500 });
+    } else if (e.type === 'lantern' && e.index !== undefined) {
+      const ln = this.level.lanterns![e.index];
+      this.field.light(e.index, (e as { gate?: number }).gate ?? ln.gate);
+      burst(this, ...this.field.toScreen([ln.x, ln.y]), 0xffc93d, 16, 420);
+      app.audio.play('pop', { volume: 0.9, detune: 700 });
+      app.haptic(10);
     }
   }
 
@@ -769,18 +792,19 @@ export class PlayScene extends BaseScene {
       c.add(new Button(this, 0, top + 40, { label: app.t('core.resume'), icon: icons.playIcon, width: 420, height: 104, fontSize: 42, onClick: () => panel.close() }));
       c.add(new Button(this, 0, top + 160, { label: app.t('game.restart'), icon: restartIcon, width: 420, height: 92, fontSize: 34, color: app.theme.surface, textColor: '#ffffff', onClick: restart }));
     }
-    const gy = compact ? { label: 100, row0: 170, row: 118, star: 56 } : { label: 250, row0: 330, row: 140, star: 62 };
+    // 20 levels: five columns of four rows.
+    const gy = compact ? { label: 92, row0: 150, row: 98, star: 46 } : { label: 248, row0: 318, row: 112, star: 50 };
     c.add(this.text(0, top + gy.label, app.t('game.levels'), 30, TEXT.dim, '700').setOrigin(0.5));
     LEVELS.forEach((l, i) => {
-      const x = ((i % 3) - 1) * 160;
-      const y = top + gy.row0 + Math.floor(i / 3) * gy.row;
+      const x = ((i % 5) - 2) * 112;
+      const y = top + gy.row0 + Math.floor(i / 5) * gy.row;
       const best = save.data.best[l.id];
       c.add(
         new Button(this, x, y, {
           label: String(l.id),
-          width: 120,
-          height: compact ? 88 : 96,
-          fontSize: 40,
+          width: 92,
+          height: compact ? 70 : 78,
+          fontSize: 34,
           color: l.id === this.level.id ? app.theme.primary : app.theme.surface,
           textColor: l.id === this.level.id ? app.theme.primaryText : '#ffffff',
           onClick: () => {
@@ -791,7 +815,7 @@ export class PlayScene extends BaseScene {
       );
       for (let k = 0; k < 3; k++) {
         const on = !!best && k < best.stars;
-        c.add(shapeImage(this, x - 30 + k * 30, y + gy.star, `star26|${on}`, 26, 26, (g) => starIcon(g, 26, on ? C.gold : 0x4a4270)));
+        c.add(shapeImage(this, x - 24 + k * 24, y + gy.star, `star20|${on}`, 20, 20, (g) => starIcon(g, 20, on ? C.gold : 0x4a4270)));
       }
     });
     const by = panel.bottom - (compact ? 62 : 90);
@@ -848,11 +872,22 @@ export class PlayScene extends BaseScene {
     }
     if (kind === 'multi') for (const h of this.field.hints) this.coachPulse(h);
     if (kind === 'candy') for (const cd of this.field.candies) this.coachPulse(cd);
+    if (kind === 'bounce') for (const pk of this.field.pumpkins) this.coachGrow(pk);
+    if (kind === 'mirror') for (const m of this.field.mirrors) this.coachGrow(m.a, m.b);
+    if (kind === 'lantern') this.coachGrow(...this.field.lanterns, ...this.field.gates);
+    if (kind === 'bat') this.coachGrow(...this.field.bats);
     if (kind === 'par') {
       this.jar.pulseGold();
       this.jar.shake();
     }
     this.placeCoach();
+  }
+
+  /** Tutorial: a few slow grow pulses on the new thing in the level. */
+  private coachGrow(...targets: Phaser.GameObjects.Image[]) {
+    if (!targets.length) return;
+    const tw = this.tweens.add({ targets, scale: 0.6, duration: 420, yoyo: true, repeat: 4, ease: 'Sine.InOut', onStop: () => targets.forEach((t) => t.setScale(0.5)), onComplete: () => targets.forEach((t) => t.setScale(0.5)) });
+    this.coach.push({ destroy: () => tw.stop() } as unknown as Phaser.GameObjects.GameObject);
   }
 
   private coachPulse(target: Phaser.GameObjects.GameObject) {

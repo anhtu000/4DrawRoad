@@ -2,6 +2,7 @@
 // Shared by the drawing input and the level tools, so an authored solution follows the same rules.
 import { INK, TUNING } from '../sim/tuning.ts';
 import { closestOnSegment, dist, downNormal, inRect, polylineLength, simplify } from './geom.ts';
+import { mechZones } from './mech.ts';
 import type { LevelDef, Pt, RectDef } from './types.ts';
 
 interface RoadSeg {
@@ -29,7 +30,7 @@ export function houseBox(level: LevelDef): RectDef {
 }
 
 export function inkZones(level: LevelDef): InkZones {
-  const rects: RectDef[] = [...level.walls, ...level.blocks, houseBox(level), carBox(level)];
+  const rects: RectDef[] = [...level.walls, ...level.blocks, houseBox(level), carBox(level), ...mechZones(level)];
   const roads: RoadSeg[] = [];
   for (const road of level.roads) {
     for (let i = 1; i < road.pts.length; i++) {

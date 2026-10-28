@@ -2,8 +2,10 @@
 // viewport. Static art is drawn once into one texture; planks, candies and hints are images.
 import Phaser from 'phaser';
 import { app } from '@core';
+import { batHeading, batPos, LANTERN_R, MIRROR_H, MIRROR_HW, PUMPKIN_R } from '../logic/mech.ts';
 import type { LevelDef, Pt } from '../logic/types.ts';
 import { drawBlock, drawCandy, drawHouse, drawPlank, drawPlankGhost, drawRoad, drawSky, drawWall } from '../render/art.ts';
+import { drawBat, drawBatPath, drawBouncePumpkin, drawFog, drawGate, drawLantern, drawMirror, MIRROR_COLORS } from '../render/mechArt.ts';
 import { C } from '../render/palette.ts';
 import { FIELD_H, FIELD_W } from '../sim/tuning.ts';
 
@@ -43,6 +45,8 @@ export class Field {
   readonly back: Phaser.GameObjects.Container;
   readonly mid: Phaser.GameObjects.Container;
   readonly front: Phaser.GameObjects.Container;
+  /** In front of the car and the ink: fog and bats. */
+  readonly over: Phaser.GameObjects.Container;
   readonly fx: Phaser.GameObjects.Container;
   /** Screen placement: field point p is at (x + p.x * s, y + p.y * s) in design units. */
   x = 0;
@@ -53,6 +57,12 @@ export class Field {
   planks: PlankView[] = [];
   candies: Phaser.GameObjects.Image[] = [];
   hints: Phaser.GameObjects.Graphics[] = [];
+  bats: Phaser.GameObjects.Image[] = [];
+  pumpkins: Phaser.GameObjects.Image[] = [];
+  mirrors: { a: Phaser.GameObjects.Image; b: Phaser.GameObjects.Image }[] = [];
+  lanterns: Phaser.GameObjects.Image[] = [];
+  gates: Phaser.GameObjects.Image[] = [];
+  private batFrame = -1;
   private staticImg: Phaser.GameObjects.Image | null = null;
   private level: LevelDef | null = null;
   private id = ++bakeCount;
@@ -62,8 +72,9 @@ export class Field {
     this.back = scene.add.container(0, 0);
     this.mid = scene.add.container(0, 0);
     this.front = scene.add.container(0, 0);
+    this.over = scene.add.container(0, 0);
     this.fx = scene.add.container(0, 0);
-    this.root.add([this.back, this.mid, this.front, this.fx]);
+    this.root.add([this.back, this.mid, this.front, this.over, this.fx]);
   }
 
   /** Field units visible on screen: the whole field in portrait, the play band in landscape. */
@@ -93,11 +104,17 @@ export class Field {
 
   load(level: LevelDef, collectedBefore: number[]) {
     this.level = level;
-    for (const list of [this.back, this.mid]) list.removeAll(true);
+    for (const list of [this.back, this.mid, this.over]) list.removeAll(true);
     this.staticImg = null;
     this.planks = [];
     this.candies = [];
     this.hints = [];
+    this.bats = [];
+    this.pumpkins = [];
+    this.mirrors = [];
+    this.lanterns = [];
+    this.gates = [];
+    this.batFrame = -1;
     this.bakeStatic();
 
     // Gap hints: dotted line between the two edges (v0 section 3.2). They fade from level 10.
@@ -127,6 +144,8 @@ export class Field {
       this.planks.push({ road: i, solid, ghost, shown: true });
     });
 
+    this.loadMechanics(level);
+
     // Candies
     level.candies.forEach((p, i) => {
       const gold = !collectedBefore.includes(i);
@@ -137,6 +156,118 @@ export class Field {
       this.scene.tweens.add({ targets: img, y: p[1] - 7, duration: 900 + i * 120, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
     });
   }
+
+  /** Fog, bats, pumpkins, mirrors, lanterns and gates (levels 6 to 20). */
+  private loadMechanics(level: LevelDef) {
+    const sc = this.scene;
+    (level.fog ?? []).forEach((f, i) => {
+      const key = bake(sc, `fog${this.id}_${i}`, -20, -20, f.w + 40, f.h + 40, 1.5, (g) => drawFog(g, f, level.id * 7 + i));
+      const img = sc.add.image(f.x - 20, f.y - 20, key).setOrigin(0).setScale(1 / 1.5).setAlpha(0.9);
+      this.over.add(img);
+      sc.tweens.add({ targets: img, x: f.x - 14, duration: 2600 + i * 400, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    });
+    (level.pumpkins ?? []).forEach((p) => {
+      const key = bakeOnce(sc, 'bouncePumpkin', -PUMPKIN_R - 8, -PUMPKIN_R * 2 - 24, PUMPKIN_R * 2 + 16, PUMPKIN_R * 2 + 30, 2, drawBouncePumpkin);
+      const img = sc.add.image(p.x, p.y, key).setOrigin(0.5, (PUMPKIN_R * 2 + 24) / (PUMPKIN_R * 2 + 30)).setScale(0.5);
+      this.mid.add(img);
+      this.pumpkins.push(img);
+    });
+    (level.mirrors ?? []).forEach((m, i) => {
+      const color = MIRROR_COLORS[i % MIRROR_COLORS.length];
+      const mk = (at: Pt, entry: boolean) => {
+        const key = bakeOnce(sc, `mirror${i % MIRROR_COLORS.length}${entry ? 'in' : 'out'}`, -MIRROR_HW - 6, -MIRROR_H - 6, MIRROR_HW * 2 + 12, MIRROR_H + 10, 2, (g) => drawMirror(g, color, entry));
+        const img = sc.add.image(at[0], at[1], key).setOrigin(0.5, (MIRROR_H + 6) / (MIRROR_H + 10)).setScale(0.5);
+        this.mid.add(img);
+        return img;
+      };
+      this.mirrors.push({ a: mk(m.a, true), b: mk(m.b, false) });
+    });
+    (level.gates ?? []).forEach((gt) => {
+      const color = MIRROR_COLORS[1];
+      const key = bakeOnce(sc, `gate${gt.w}x${gt.h}`, -4, -4, gt.w + 8, gt.h + 8, 2, (g) => drawGate(g, gt, color));
+      const img = sc.add.image(gt.x - 4, gt.y - 4, key).setOrigin(0).setScale(0.5);
+      this.mid.add(img);
+      this.gates.push(img);
+    });
+    (level.lanterns ?? []).forEach((ln) => {
+      bakeOnce(sc, 'lantern1', -48, -50, 96, 100, 2, (g) => drawLantern(g, true));
+      const key = bakeOnce(sc, 'lantern0', -48, -50, 96, 100, 2, (g) => drawLantern(g, false));
+      const img = sc.add.image(ln.x, ln.y, key).setOrigin(48 / 96, 50 / 100).setScale(0.5);
+      this.mid.add(img);
+      this.lanterns.push(img);
+      sc.tweens.add({ targets: img, angle: 4, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    });
+    (level.bats ?? []).forEach(() => {
+      bakeOnce(sc, 'bat1', -40, -32, 80, 56, 2, (g) => drawBat(g, true));
+      const key = bakeOnce(sc, 'bat0', -40, -32, 80, 56, 2, (g) => drawBat(g, false));
+      const img = sc.add.image(0, 0, key).setOrigin(0.5, 32 / 56).setScale(0.5);
+      this.over.add(img);
+      this.bats.push(img);
+    });
+    this.setMechTime(0);
+  }
+
+  /** Bats at time t (seconds since GO, or since the level opened while drawing). */
+  setMechTime(t: number) {
+    const bats = this.level?.bats ?? [];
+    const frame = Math.floor(t * 8) % 2;
+    bats.forEach((b, i) => {
+      const img = this.bats[i];
+      if (!img) return;
+      const p = batPos(b, t);
+      img.setPosition(p[0], p[1]);
+      const h = batHeading(b, t);
+      const dx = (b.b[0] - b.a[0]) * h;
+      if (Math.abs(dx) > 1) img.setFlipX(dx < 0);
+      if (frame !== this.batFrame) img.setTexture(frame ? 'bat1' : 'bat0');
+    });
+    this.batFrame = frame;
+  }
+
+  /** A pumpkin threw the car: it squashes and springs back. */
+  bounce(i: number) {
+    const img = this.pumpkins[i];
+    if (!img) return;
+    this.scene.tweens.killTweensOf(img);
+    img.setScale(0.62, 0.38);
+    this.scene.tweens.add({ targets: img, scaleX: 0.5, scaleY: 0.5, duration: 420, ease: 'Elastic.Out' });
+  }
+
+  /** The car went into mirror pair i: both mirrors flash. */
+  mirrorFlash(i: number) {
+    const m = this.mirrors[i];
+    if (!m) return;
+    for (const img of [m.a, m.b]) {
+      this.scene.tweens.killTweensOf(img);
+      img.setScale(0.58);
+      this.scene.tweens.add({ targets: img, scale: 0.5, duration: 360, ease: 'Back.Out' });
+    }
+  }
+
+  /** Lantern i is lit and gate g opens. */
+  light(i: number, gate: number) {
+    this.lanterns[i]?.setTexture('lantern1');
+    const img = this.gates[gate];
+    const gt = this.level?.gates?.[gate];
+    if (img && gt) {
+      this.scene.tweens.killTweensOf(img);
+      this.scene.tweens.add({ targets: img, y: gt.y - 4 - gt.h * 0.85, alpha: 0.35, duration: 450, ease: 'Cubic.Out' });
+    }
+  }
+
+  /** Back to the start of a run: lanterns out, gates shut. */
+  resetMechanics() {
+    this.lanterns.forEach((img) => img.setTexture('lantern0'));
+    (this.level?.gates ?? []).forEach((gt, i) => {
+      const img = this.gates[i];
+      if (!img) return;
+      this.scene.tweens.killTweensOf(img);
+      img.setPosition(gt.x - 4, gt.y - 4).setAlpha(1);
+    });
+  }
+
+  /** Lantern hit radius, for the coach pulse. */
+  static readonly lanternR = LANTERN_R;
 
   /** Shows a plank solid or gone, with a quick fade. */
   setPlank(view: PlankView, shown: boolean) {
@@ -165,6 +296,7 @@ export class Field {
     bake(this.scene, key, 0, 0, FIELD_W, FIELD_H, this.res, (g) => {
       drawSky(g, 0, 0, FIELD_W, FIELD_H, [560 - (level.id % 3) * 190, 240 + (level.id % 2) * 40], level.id);
       for (const b of level.blocks) drawBlock(g, b, viewBottom);
+      for (const b of level.bats ?? []) drawBatPath(g, b.a, b.b);
       level.roads.forEach((road, i) => {
         if (!road.ghost) drawRoad(g, road.pts, level.id * 10 + i);
       });
