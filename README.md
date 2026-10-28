@@ -1,6 +1,6 @@
 # Ghost Ink Road (game #4, bản thử lõi)
 
-Puzzle vẽ đường bằng mực, thế giới ma dễ thương, đi đường Poki. Phaser 4.2.1 + TypeScript, dựng bằng Vite, trên bộ khung `core/` chép từ game #1. Quyết định chung của dự án nằm trong `CLAUDE.md` (mục 5e). Thiết kế: `Game4-ThietKe.md` (v0) và `docs/Game4-DrawRoad_Brief_v1.md` (rà soát, đặc tả bản thử). Kết quả bản thử: `docs/Game4-DrawRoad_Report_v3.md` (v2 thêm chơi thử đợt 1, màn bị rò, xe mới; v3 thêm hai luật mức chuẩn và 6 màn sửa lại).
+Puzzle vẽ đường bằng mực, thế giới ma dễ thương, đi đường Poki. Phaser 4.2.1 + TypeScript, dựng bằng Vite, trên bộ khung `core/` chép từ game #1. Quyết định chung của dự án nằm trong `CLAUDE.md` (mục 5e). Thiết kế: `Game4-ThietKe.md` (v0) và `docs/Game4-DrawRoad_Brief_v1.md` (rà soát, đặc tả bản thử). Kết quả bản thử: `docs/Game4-DrawRoad_Report_v4.md` (v2 thêm chơi thử đợt 1, màn bị rò, xe mới; v3 thêm hai luật mức chuẩn và 6 màn sửa lại; v4 thêm chơi thử đợt 2 và vì sao xe kẹt).
 
 Bản thử chỉ có 6 màn (1–5 và 10), đồ hoạ vẽ bằng code, chưa có xu, cửa hàng, SDK, quảng cáo, nhạc nền.
 
