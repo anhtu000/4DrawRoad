@@ -356,9 +356,63 @@ Nhật ký không ghi nét vẽ, nên không chạy lại được đúng lượ
 
 ## 14. Bước 2: đủ 20 màn (28/10)
 
-{SEC14}
+Người dùng cho làm bước 2 ngày 28/10, trước khi bước 1 đạt đủ H1–H7. Đặc tả: `docs/Game4-DrawRoad_Brief_v2.md` mục 7 (5 cơ chế mới, luật "chỗ đứt là hố", bảng 20 màn, lệch so với v0).
+
+### 14.1 Đã làm
+
+- 14 màn mới (6–9, 11–20), tổng 20 màn, 45 hộp kẹo như v0.
+- 5 cơ chế mới trong phần vật lý dùng chung cho game và công cụ: sương ma, dơi, bí ngô bật, gương, đèn lồng mở cổng. Thêm luật chỗ đứt và ván ma là hố (rơi qua sâu 120 đơn vị là thua). Sáu màn cũ vẫn qua levelcheck sau các thay đổi này.
+- Hình vẽ bằng code cho cả 5 cơ chế; dơi vỗ cánh và bay theo đúng nhịp của vật lý (khi vẽ cũng như khi chạy); bí ngô nén lại khi hất xe; gương loé sáng khi xe đi qua; đèn lồng sáng và cổng kéo lên.
+- Dòng gợi ý ngắn ở màn giới thiệu mỗi cơ chế (6, 8, 12, 15, 17), vật mới nhấp nháy vài lần.
+- Menu tạm dừng: lưới 20 màn (5 cột).
+- Công cụ `npm run levelmap`: ảnh bản đồ màn có đường đi của xe, dùng để dựng và soát màn.
+- Levelcheck thêm: màn 14 và 20 nối thẳng phải thua; kiểm riêng từng màn cho bài học chính (bảng ở 14.3).
+
+### 14.2 Mức chuẩn sau `levelcheck --fix`
+
+Lời giải mẫu là cách dễ thấy; "cách rẻ nhất" là lời giải ít mực nhất mà công cụ tìm được, vẫn thắng đủ kẹo khi có nhiễu. T = cách rẻ nhất × 1,1.
+
+| Màn | Lời giải mẫu (mực) | Cách rẻ nhất (mực) | T | B |
+| --- | --- | --- | --- | --- |
+| 6 | 934 | 500 | 550 | 1100 |
+| 7 | 795 | 430 | 473 | 914 |
+| 8 | 1006 | 331 | 364 | 1157 |
+| 9 | 843 | 395 | 434 | 969 |
+| 11 | 1147 | 235 | 258 | 1319 |
+| 12 | 274 | 51 | 57 | 315 |
+| 13 | 548 | 102 | 112 | 630 |
+| 14 | 1058 | 375 | 413 | 1216 |
+| 15 | 599 | 69 | 76 | 688 |
+| 16 | 747 | 247 | 272 | 859 |
+| 17 | 646 | 191 | 210 | 743 |
+| 18 | 1060 | 383 | 421 | 1220 |
+| 19 | 726 | 202 | 222 | 835 |
+| 20 | 1291 | 453 | 498 | 1485 |
+
+Mọi màn mới qua các kiểm của levelcheck trong hai lượt `--fix` (màn 8, 9, 13 chạy lại sau khi sửa). Sau đó màn 14, 16, 18, 20 được dời xuống 40 đơn vị để kẹo trên cùng không bị thanh tiêu đề che; vật lý không đổi theo phép dời, đã chạy lại lời giải mẫu và nhiễu (40/40) cho 4 màn này.
+
+### 14.3 Chưa làm xong (dừng ngày 29/10 theo yêu cầu người dùng)
+
+- Chưa chạy lại `npm run levelcheck` cho cả 20 màn một lượt (mất khoảng 30 phút).
+- Chưa chạy bot trình duyệt cho 20 màn (lượt chạy bị dừng giữa chừng). Ảnh chụp màn 6, 8, 12, 15, 16, 17, 18, 20 trên trình duyệt không có lỗi console.
+- Bản thử điện thoại `builds/GhostInkRoad_PhoneTest_v4.html` đã build (1,87 MB) nhưng chưa kiểm bằng bot, chưa đăng lên artifact.
+
+### 14.4 Kiểm riêng từng màn trong levelcheck
+
+Màn 6: nối thẳng bị sương cắt nên thua. Màn 7: đi tuyến dưới thắng nhưng thiếu kẹo. Màn 8: cầu thẳng dưới dơi thua; cầu phẳng ở tầng giữa thắng nhưng thiếu kẹo. Màn 11: không vá ván ma đầu tiên thì rơi. Màn 14: cách thứ hai (dốc vượt bí ngô, cầu dài) thắng, thiếu kẹo. Màn 18: cầu phẳng không chạm đèn lồng, cổng đóng, thua. Màn 20: cách thứ hai thắng đủ kẹo; vòng dưới sương không thắp đèn, thua. Màn 14 và 20: nối thẳng thua.
+
+### 14.5 Rủi ro và việc tiếp theo
+
+- Sự thật: màn 6–20 mới chỉ được máy và bot chơi. Chưa người nào chơi, nên độ khó, thời gian mỗi màn và chỗ người chơi bỏ cuộc đều chưa biết.
+- Ý kiến: từ màn 4, cách rẻ nhất thường là vài miếng mực rất ngắn mà người chơi khó nghĩ ra, nên lời giải dễ thấy chỉ được 1 sao (như màn 4 ở đợt chơi thử 2). Với 17 màn theo luật này, tỉ lệ 3 sao có thể rất thấp. Nên đo trong đợt chơi thử tới; nếu thấp thì đổi T sang một mốc giữa (ví dụ trung bình của cách rẻ nhất và lời giải dễ thấy) thay vì chỉ nới hệ số.
+- Ý kiến: dơi ở màn 8, 9 và kẹo canh giờ cần người chơi thử nhiều lần mới hiểu. Nếu người chơi thấy "may rủi", có thể làm dơi chậm hơn hoặc hiện vệt dự đoán cho cả dơi khi giữ GO.
+- Màn 12 nhỏ và dễ (một bước lên bằng bí ngô); màn 19 là màn nghỉ trước màn cuối như v0.
+- Chưa làm (để sang bước sau): thẻ hình giới thiệu cơ chế, trình sửa màn trong trình duyệt, gợi ý và bỏ qua màn ở màn đỉnh.
+- Việc tiếp theo theo lộ trình: chơi thử 20 màn với 3–5 người mới (gộp với phần H1–H7 còn thiếu); song song bước 3 (mô phỏng kinh tế: xu, thời gian từng màn) và bước 4 (mỹ thuật).
 
 ## 15. Nguồn
+
+- Bước 2 (mục 14): `npm run levelcheck -- --fix` ngày 28–29/10, `tools/levelmap.ts`, ảnh chụp trình duyệt Chromium (SwiftShader) khung 412×915.
 
 - Đợt 2 (mục 13): nhật ký người dùng gửi ngày 28/10; phép thử nét vồng chạy bằng `tools/search.ts` (`runLines`) với vật lý của bản v3; ngưỡng sao tính bằng `starLimits` trong `src/logic/score.ts`.
 - Đo bằng `npm run levelcheck` (bản 22/10 có tìm cách rẻ nhất), `npm run tune`, `npm run cheapest` (22/10) và script đo trọng lực, nhiễu trong lần kiểm này; nhật ký chơi thử người dùng gửi ngày 22/10; bot Playwright (Chromium, SwiftShader) ở khung 412×915 (dọc), 1280×720 (ngang), 390×844 (cảm ứng).
