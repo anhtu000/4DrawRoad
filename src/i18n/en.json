@@ -14,7 +14,7 @@
     "lessInk": "Use {n} less ink for 3 stars",
     "lessInk2": "Use {n} less ink for 2 stars",
     "candy": "Candy {n}/{m}",
-    "allDone": "That's every level in this test. Thanks for playing!",
+    "allDone": "That was the last level. Thanks for playing!",
     "noInk": "Out of ink!",
     "boo": "Boo!",
     "why": {
@@ -22,7 +22,8 @@
       "flip": "Flipped over",
       "stuck": "Got stuck",
       "timeout": "Took too long",
-      "stopped": "Stopped"
+      "stopped": "Stopped",
+      "bat": "A bat bumped you"
     },
     "tip": {
       "draw": "Draw the road!",
@@ -33,7 +34,12 @@
       "jump": "Draw a ramp. Hold GO to aim",
       "ghost": "Ghost planks blink!",
       "ghostSub": "Watch when they vanish",
-      "tapToStart": "Tap to start"
+      "tapToStart": "Tap to start",
+      "fog": "No ink in the fog",
+      "bat": "Dodge the bats!",
+      "bounce": "Pumpkins throw you up",
+      "mirror": "Mirrors take you across",
+      "lantern": "Lanterns open gates"
     },
     "holdToClear": "Hold to clear",
     "exportLog": "Copy test log",

@@ -18,7 +18,8 @@
     "levelcheck": "node --experimental-strip-types tools/levelcheck.ts",
     "tune": "node --experimental-strip-types tools/tune.ts",
     "sfx": "python3 tools/make_sfx.py",
-    "cheapest": "node --experimental-strip-types tools/cheapest.ts"
+    "cheapest": "node --experimental-strip-types tools/cheapest.ts",
+    "levelmap": "node --experimental-strip-types --no-warnings tools/levelmap.ts"
   },
   "dependencies": {
     "phaser": "4.2.1"

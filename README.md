@@ -1,8 +1,8 @@
-# Ghost Ink Road (game #4, bản thử lõi)
+# Ghost Ink Road (game #4)
 
-Puzzle vẽ đường bằng mực, thế giới ma dễ thương, đi đường Poki. Phaser 4.2.1 + TypeScript, dựng bằng Vite, trên bộ khung `core/` chép từ game #1. Quyết định chung của dự án nằm trong `CLAUDE.md` (mục 5e). Thiết kế: `Game4-ThietKe.md` (v0) và `docs/Game4-DrawRoad_Brief_v1.md` (rà soát, đặc tả bản thử). Kết quả bản thử: `docs/Game4-DrawRoad_Report_v4.md` (v2 thêm chơi thử đợt 1, màn bị rò, xe mới; v3 thêm hai luật mức chuẩn và 6 màn sửa lại; v4 thêm chơi thử đợt 2 và vì sao xe kẹt).
+Puzzle vẽ đường bằng mực, thế giới ma dễ thương, đi đường Poki. Phaser 4.2.1 + TypeScript, dựng bằng Vite, trên bộ khung `core/` chép từ game #1. Quyết định chung của dự án nằm trong `CLAUDE.md` (mục 5e). Thiết kế: `Game4-ThietKe.md` (v0) và `docs/Game4-DrawRoad_Brief_v2.md` (rà soát, đặc tả bản thử; v2 thêm đặc tả 20 màn và 5 cơ chế mới). Kết quả: `docs/Game4-DrawRoad_Report_v5.md` (v2 thêm chơi thử đợt 1, màn bị rò, xe mới; v3 thêm hai luật mức chuẩn và 6 màn sửa lại; v4 thêm chơi thử đợt 2 và vì sao xe kẹt; v5 thêm kết quả đủ 20 màn).
 
-Bản thử chỉ có 6 màn (1–5 và 10), đồ hoạ vẽ bằng code, chưa có xu, cửa hàng, SDK, quảng cáo, nhạc nền.
+Đủ 20 màn với sương ma, dơi, ván ma, bí ngô bật, gương, đèn lồng và cổng. Đồ hoạ vẽ bằng code, chưa có xu, cửa hàng, SDK, quảng cáo, nhạc nền.
 
 ## Cài đặt
 
@@ -17,8 +17,9 @@ Bản thử chỉ có 6 màn (1–5 và 10), đồ hoạ vẽ bằng code, chưa
 | `npm run build:single` | Build web rồi gộp thành một file HTML để thử trên điện thoại: `dist/single/GhostInkRoad_PhoneTest_v1.html` |
 | `npm run build:web` | Build web vào `dist/web` |
 | `npm run build` | Build Poki vào `dist/poki` (chưa dùng ở bản thử) |
-| `npm run levelcheck` | Kiểm mọi màn bằng đúng vật lý của game, gồm cả tìm cách rẻ nhất (xem dưới, khoảng 2 phút). Thêm `-- --fix` để ghi lại T, B và `best` vào file màn, `-- 4 5` để chỉ kiểm vài màn, `-- --trace 5` để in đường đi của xe ở màn 5 |
+| `npm run levelcheck` | Kiểm mọi màn bằng đúng vật lý của game, gồm cả tìm cách rẻ nhất (xem dưới; 20 màn mất khoảng nửa giờ). Thêm `-- --fix` để ghi lại T, B và `best` vào file màn, `-- 4 5` để chỉ kiểm vài màn, `-- --trace 5` để in đường đi của xe ở màn 5 |
 | `npm run cheapest` | Tìm cách thắng rẻ mực nhất cho từng màn (cắt bớt nét, dốc ngắn ở mép) để kiểm mức chuẩn T có quá dễ không. Chạy vài phút |
+| `npm run levelmap -- 6 7` | Ảnh bản đồ màn vào `.levelmaps/`: mọi vật trong màn, lời giải mẫu (tím) và cách rẻ nhất (vàng) cùng đường đi của xe và các sự kiện. Thêm `--file nhap.json` để xem một màn nháp |
 | `npm run tune` | Đo xe so với mục tiêu: tốc độ, dốc leo được, quãng bay, rơi tầng, độ êm trên nét mực |
 | `npm run typecheck` | Kiểm lỗi TypeScript |
 | `npm test` | Test của bộ khung |
@@ -30,7 +31,7 @@ Không có lệnh `sync-core` ở repo này: bộ khung chỉ sửa ở game #1 
 
 | Tham số | Tác dụng |
 | --- | --- |
-| `?level=5` hoặc `#l5` | Mở thẳng màn 5 (id màn: 1, 2, 3, 4, 5, 10). Trang artifact bỏ phần `?`, nên ở đó dùng dạng `#` |
+| `?level=5` hoặc `#l5` | Mở thẳng màn 5 (1 đến 20). Trang artifact bỏ phần `?`, nên ở đó dùng dạng `#` |
 | `?debug` hoặc `#debug` | Hộp debug: fps, thời gian game mỗi khung, `sim ms/step` (vật lý mỗi bước). Trên điện thoại: chạm tên màn 5 lần |
 | `?inkturn` | Thử luật quay đầu phương án B: nét mực dựng đứng (dốc hơn 70°) cũng làm xe quay đầu |
 | `?reset` hoặc `#reset` | Xoá save thử (sao, kẹo, bước hướng dẫn) và nhật ký lượt thử giữ nguyên |
@@ -44,20 +45,20 @@ Nhật ký lượt thử: mỗi lần bấm GO ghi một dòng (màn, lần th�
 - GO: nút GO, Space hoặc Enter. Bấm lại khi xe đang chạy để dừng.
 - Hoàn tác nét cuối: nút ↶ hoặc Z. Xoá hết: giữ nút thùng rác 0,5 giây, hoặc R.
 - Tạm dừng: nút ≡ hoặc P (không dùng Esc vì Esc thoát toàn màn hình).
-- Màn 5: giữ GO để thấy vệt chấm dự đoán đường bay.
+- Màn 5 đến 8: giữ GO để thấy vệt chấm dự đoán đường bay.
 
 ## Cấu trúc
 
 | Thư mục | Nội dung |
 | --- | --- |
 | `core/` | Bộ khung chung (không sửa ở đây) |
-| `src/levels/*.json` | Mỗi màn một file: đường, vách quay đầu, khối đá, chỗ đứt, kẹo, mực B và T, luật mức chuẩn (`parRule`), lời giải mẫu, lời giải khác (`alt`), cách rẻ nhất (`best`) |
+| `src/levels/*.json` | Mỗi màn một file: đường, vách quay đầu, khối đá, chỗ đứt, kẹo, sương, dơi, bí ngô, gương, đèn lồng, cổng, mực B và T, luật mức chuẩn (`parRule`), lời giải mẫu, lời giải khác (`alt`), cách rẻ nhất (`best`) |
 | `src/sim/` | Vật lý: `sim.ts` (thế giới Matter, xe, luật thắng thua, ván ma), `tuning.ts` (mọi hằng số vật lý và luật vẽ) |
-| `src/logic/` | Hình học, luật vẽ (chỗ không được vẽ, cắt nét, hút đầu nét), điểm mực chữ S |
+| `src/logic/` | Hình học, luật vẽ (chỗ không được vẽ, cắt nét, hút đầu nét), điểm mực chữ S, hình học của các cơ chế (`mech.ts`) |
 | `src/play/`, `src/ui/`, `src/render/` | Hiển thị: sân chơi, xe, nét mực, lọ mực, hình vẽ bằng code. Xe và Lumi: `src/render/car.ts` (hình), `src/play/CarView.ts` (ghép và chuyển động) |
 | `tools/carsheet/` | Bảng mẫu xe: `npm run dev` rồi mở `/tools/carsheet/index.html` |
 | `src/scenes/PlayScene.ts` | Cả vòng chơi: vẽ, chạy, kết quả, menu, hướng dẫn |
-| `tools/` | `levelcheck.ts`, `tune.ts`, `matter.ts` (nạp đúng bản Matter.js của Phaser cho Node), `make_sfx.py` |
+| `tools/` | `levelcheck.ts`, `levelmap.ts`, `search.ts`, `cheapest.ts`, `tune.ts`, `matter.ts` (nạp đúng bản Matter.js của Phaser cho Node), `make_sfx.py` |
 
 Vật lý chạy bước cố định 1/60 giây, tách khỏi tốc độ khung hình; cùng nét vẽ thì cùng kết quả. Game dùng `Phaser.Physics.Matter.Matter`, công cụ Node nạp cùng file nguồn trong gói `phaser`, nên `levelcheck` chạy đúng vật lý của game.
 

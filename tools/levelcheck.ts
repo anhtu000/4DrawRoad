@@ -3,7 +3,8 @@
 //   1. the reference solution wins and collects every candy, also with a little hand shake
 //   2. drawing nothing loses
 //   3. every gap matters: leaving any one gap unpatched loses
-//   4. straight lines across every gap win on levels 1-4 (easy levels set no traps)
+//   4. straight lines across every gap win on levels 1-4 (easy levels set no traps) and lose on the
+//      peak levels 14 and 20
 //   5. noise: the reference solution with +-2 units on every point wins at least 95 of 100 times
 //   6. the same strokes give exactly the same run twice
 //   7. par and budget, by the level's rule:
@@ -29,7 +30,12 @@ import { Matter } from './matter.ts';
 import { drawLines, findCheapest, robustWin, runLines, shake } from './search.ts';
 
 /** B/T per level, from the v0 level table (section 6.2). */
-const RATIO: Record<number, number> = { 1: 3.0, 2: 2.8, 3: 2.6, 4: 2.4, 5: 2.2, 6: 2.0, 7: 1.6, 8: 1.9, 9: 1.55, 10: 1.8 };
+const RATIO: Record<number, number> = {
+  1: 3.0, 2: 2.8, 3: 2.6, 4: 2.4, 5: 2.2, 6: 2.0, 7: 1.6, 8: 1.9, 9: 1.55, 10: 1.8,
+  11: 1.5, 12: 1.75, 13: 1.45, 14: 1.25, 15: 1.7, 16: 1.4, 17: 1.65, 18: 1.35, 19: 1.6, 20: 1.2,
+};
+/** Peak levels: straight lines across every gap must lose (v0 section 10.2, step 4). */
+const PEAKS = [14, 20];
 /** Patch levels: the cheapest win found may not cost less than this share of the reference. */
 const LEAK = 0.65;
 /** Cheapest levels: the budget leaves this much room over the obvious solution. */
@@ -61,6 +67,19 @@ const EXTRAS: Record<number, Extra[]> = {
     { name: 'no patch: the car falls through the plank', lines: [[[300, 447], [460, 447]], [[280, 907], [380, 877], [480, 907]]], expect: 'lose' },
     { name: 'patch too short: the car falls through the plank', lines: [[[300, 447], [460, 447]], [[260, 667], [340, 667]], [[280, 907], [380, 877], [480, 907]]], expect: 'lose' },
     { name: 'short patch timed with the plank', lines: [[[300, 447], [460, 447]], [[425, 667], [500, 667]], [[280, 907], [380, 877], [480, 907]]], expect: 'win', report: true },
+  ],
+  6: [{ name: 'straight lines are cut by the fog', lines: [[[300, 420], [480, 380]], [[520, 640], [300, 600]], [[290, 860], [480, 820]]], expect: 'lose' }],
+  7: [{ name: 'low road (no ramp up to the ledge) misses the ledge candies', lines: [[[600, 647], [437, 545], [323, 545], [290, 607]], [[200, 867], [276, 833]], [[380, 833], [470, 827]]], expect: 'win-no-candy', report: true }],
+  8: [
+    { name: 'straight bridge under the first bat', lines: [[[380, 380], [200, 340]], [[300, 580], [500, 580]], [[480, 800], [260, 800]]], expect: 'lose' },
+    { name: 'flat bridge on the middle road misses the candy by the bat', lines: [[[560, 387], [400, 300], [215, 300], [200, 347]], [[300, 587], [500, 587]], [[600, 807], [450, 742], [290, 742], [260, 807]]], expect: 'win-no-candy' },
+  ],
+  11: [{ name: 'no patch on the first plank: it is gone when the car gets there', lines: [[[600, 587], [450, 520], [290, 520], [260, 587]], [[190, 807], [470, 807]], [[480, 1027], [370, 995], [260, 1027]]], expect: 'lose' }],
+  14: [{ name: 'second way: ramp over the pumpkin and a long bridge', lines: [[[570, 347], [437, 267], [293, 267], [260, 347]], [[150, 587], [300, 510], [400, 510], [450, 587], [572, 587]], [[620, 847], [520, 785], [340, 785], [320, 847]], [[240, 847], [175, 825], [110, 847]]], expect: 'win-no-candy', report: true }],
+  18: [{ name: 'flat bridge under the lantern: the gate stays shut', lines: [[[130, 367], [230, 295], [365, 295], [380, 367]], [[500, 367], [560, 345], [620, 367]], [[200, 747], [400, 747]], [[600, 1007], [470, 945], [290, 945], [270, 1007]]], expect: 'lose' }],
+  20: [
+    { name: 'second way: ramp over the pumpkin and a long bridge', lines: [[[130, 337], [230, 265], [365, 265], [380, 337]], [[470, 337], [570, 337]], [[600, 567], [470, 510], [310, 510], [300, 567]], [[620, 827], [505, 745], [430, 745], [400, 827], [200, 827]], [[150, 1087], [210, 1030], [350, 1030], [360, 1087]], [[480, 1087], [540, 1065], [600, 1087]]], expect: 'win', report: true },
+    { name: 'dip under the fog misses the lantern: the gate stays shut', lines: [[[130, 337], [230, 265], [365, 265], [380, 337]], [[470, 337], [570, 337]], [[480, 567], [440, 645], [340, 645], [300, 567]], [[300, 827], [200, 827]], [[150, 1087], [210, 1030], [350, 1030], [360, 1087]], [[480, 1087], [540, 1065], [600, 1087]]], expect: 'lose' },
   ],
 };
 
@@ -119,8 +138,10 @@ for (const level of LEVELS) {
   if (empty.outcome === 'win') fail('drawing nothing wins');
   else console.log(`  ok   no ink: ${empty.outcome}`);
 
-  // 3: leave one gap open (the reference lines that start or end at it removed).
+  // 3: leave one gap open (the reference lines that start or end at it removed). Optional gaps
+  // (a fork to a candy route) may be left open.
   level.gaps.forEach((g, gi) => {
+    if (g.optional) return;
     const near = (p: Pt) => [g.a, g.b].some((q) => Math.hypot(p[0] - q[0], p[1] - q[1]) < 30);
     const lines = level.solution.filter((line) => !near(line[0]) && !near(line[line.length - 1]));
     if (lines.length === level.solution.length) return;
@@ -132,11 +153,14 @@ for (const level of LEVELS) {
   // 4
   const straight = runLines(
     level,
-    level.gaps.map((g) => [g.a, g.b]),
+    level.gaps.filter((g) => !g.optional).map((g) => [g.a, g.b]),
   ).result;
   if (level.id <= 4) {
     if (straight.outcome !== 'win') fail(`straight lines across the gaps: ${describe(straight, level)}`);
     else console.log(`  ok   straight lines win (${describe(straight, level)})`);
+  } else if (PEAKS.includes(level.id)) {
+    if (straight.outcome === 'win') fail(`peak level: straight lines across the gaps win (${describe(straight, level)})`);
+    else console.log(`  ok   peak level: straight lines lose (${describe(straight, level)})`);
   } else console.log(`  info straight lines: ${describe(straight, level)}`);
 
   // 5

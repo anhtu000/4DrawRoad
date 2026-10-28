@@ -3,6 +3,7 @@
 // all share this file. Matter is passed in: the game hands over Phaser's bundled copy, the Node tools
 // load the same source files from the phaser package.
 import { downNormal } from '../logic/geom.ts';
+import { BAT_R, batPos, LANTERN_R, MIRROR_H, MIRROR_HW, PUMPKIN_POWER, PUMPKIN_PUSH, PUMPKIN_R, pumpkinCenter } from '../logic/mech.ts';
 import type { LevelDef, Pt } from '../logic/types.ts';
 import { STEP_MS, TUNING } from './tuning.ts';
 
@@ -12,7 +13,7 @@ export type MatterLib = any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Body = any;
 
-export type Outcome = 'win' | 'fall' | 'flip' | 'stuck' | 'timeout';
+export type Outcome = 'win' | 'fall' | 'flip' | 'stuck' | 'timeout' | 'bat';
 
 export interface SimResult {
   outcome: Outcome;
@@ -21,7 +22,12 @@ export interface SimResult {
   candies: number[];
 }
 
-export type SimEvent = { type: 'candy'; index: number } | { type: 'turn'; x: number; y: number };
+export type SimEvent =
+  | { type: 'candy'; index: number }
+  | { type: 'turn'; x: number; y: number }
+  | { type: 'bounce'; index: number }
+  | { type: 'teleport'; index: number; dx: number; dy: number }
+  | { type: 'lantern'; index: number; gate: number };
 
 export interface SimOptions {
   /** Option B of the turn rule: a near-vertical ink stroke also turns the car (?inkturn). */
@@ -68,6 +74,9 @@ export class Sim {
   ];
   readonly events: SimEvent[] = [];
   readonly ghosts: GhostGroup[] = [];
+  /** Lanterns lit so far, and gates open so far. */
+  readonly lit: boolean[];
+  readonly gateOpen: boolean[];
 
   private walls = new Set<Body>();
   private inkSteep = new Set<Body>();
@@ -79,6 +88,14 @@ export class Sim {
   private mass = 0;
   /** Chassis positions of the last few seconds, for the 'not getting anywhere' check. */
   private trail: number[] = [];
+  private gateBodies: Body[] = [];
+  /** Per gap: chassis below the gap line last step, and fell into the gap (crossed its line going down). */
+  private gapBelow: boolean[] = [];
+  private gapIn: boolean[] = [];
+  /** Holes the car can fall into: every gap that is not optional, and every ghost plank. */
+  private holes: { a: Pt; b: Pt }[] = [];
+  private bounceCooldown = 0;
+  private mirrorCooldown = 0;
 
   constructor(M: MatterLib, level: LevelDef, strokes: Pt[][], options: SimOptions = {}) {
     this.M = M;
@@ -87,6 +104,8 @@ export class Sim {
     this.inkTurn = !!options.inkTurn;
     this.dir = level.car.dir;
     this.collected = level.candies.map(() => false);
+    this.lit = (level.lanterns ?? []).map(() => false);
+    this.gateOpen = (level.gates ?? []).map(() => false);
     const t = this.tune;
 
     this.engine = M.Engine.create({
@@ -150,6 +169,19 @@ export class Sim {
           label: 'block',
         }),
       );
+    }
+
+    // Gates turn the car like walls while they are shut (they open when their lantern is lit).
+    for (const gt of level.gates ?? []) {
+      const body = M.Bodies.rectangle(gt.x + gt.w / 2, gt.y + gt.h / 2, gt.w, gt.h, {
+        isStatic: true,
+        friction: 0.2,
+        collisionFilter: { ...ground },
+        label: 'gate',
+      });
+      this.walls.add(body);
+      this.gateBodies.push(body);
+      statics.push(body);
     }
 
     // Ink: a rectangle per segment centered on the line, and a round cap at every point so the joins
@@ -219,6 +251,12 @@ export class Sim {
     }
 
     M.Composite.add(this.engine.world, [...statics, this.chassis, ...this.wheels, ...springs]);
+    this.holes = [
+      ...level.gaps.filter((g) => !g.optional),
+      ...level.roads.filter((r) => r.ghost).map((r) => ({ a: r.pts[0], b: r.pts[r.pts.length - 1] })),
+    ];
+    this.gapBelow = this.holes.map((g) => this.gapDepth(g) > 0);
+    this.gapIn = this.holes.map(() => false);
     this.updateGhosts();
   }
 
@@ -270,6 +308,8 @@ export class Sim {
     }
     if (this.pause > 0) this.pause--;
     if (this.turnCooldown > 0) this.turnCooldown--;
+    if (this.bounceCooldown > 0) this.bounceCooldown--;
+    if (this.mirrorCooldown > 0) this.mirrorCooldown--;
 
     M.Engine.update(this.engine, STEP_MS);
 
@@ -320,8 +360,81 @@ export class Sim {
       this.events.push({ type: 'turn', x: this.chassis.position.x, y: this.chassis.position.y });
     }
 
+    this.checkPumpkins();
+    this.checkMirrors();
     this.checkCandies();
+    this.checkLanterns();
     this.checkEnd();
+  }
+
+  /** Pumpkins are springy, not solid: touching one (driving into it or landing on it) throws the car. */
+  private checkPumpkins() {
+    if (this.bounceCooldown > 0) return;
+    (this.level.pumpkins ?? []).forEach((pk, i) => {
+      if (this.bounceCooldown === 0 && this.touches(pumpkinCenter(pk), PUMPKIN_R)) this.launch(i);
+    });
+  }
+
+  /** A pumpkin throws the car: same velocity for every part, so the car keeps its shape. */
+  private launch(index: number) {
+    const pk = this.level.pumpkins![index];
+    const vx = (this.dir * (pk.push ?? PUMPKIN_PUSH)) / 60;
+    const vy = -(pk.power ?? PUMPKIN_POWER) / 60;
+    for (const part of this.carParts) this.M.Body.setVelocity(part, { x: vx, y: vy });
+    this.M.Body.setAngularVelocity(this.chassis, 0);
+    this.bounceCooldown = 30;
+    this.events.push({ type: 'bounce', index });
+  }
+
+  /** Entering mirror a moves the whole car to mirror b, keeping its speed and direction. */
+  private checkMirrors() {
+    if (this.mirrorCooldown > 0) return;
+    const c = this.chassis.position;
+    (this.level.mirrors ?? []).forEach((m, i) => {
+      if (this.mirrorCooldown > 0) return;
+      if (Math.abs(c.x - m.a[0]) > MIRROR_HW - 6 || c.y > m.a[1] || c.y < m.a[1] - MIRROR_H) return;
+      const dx = m.b[0] - m.a[0];
+      const dy = m.b[1] - m.a[1];
+      for (const part of this.carParts) this.M.Body.setPosition(part, { x: part.position.x + dx, y: part.position.y + dy });
+      this.trail = [];
+      // The car did not fall into anything on the way: start the hole tracking again from here.
+      this.gapBelow = this.holes.map((g) => this.gapDepth(g) > 0);
+      this.gapIn.fill(false);
+      this.mirrorCooldown = 30;
+      this.events.push({ type: 'teleport', index: i, dx, dy });
+    });
+  }
+
+  private checkLanterns() {
+    (this.level.lanterns ?? []).forEach((ln, i) => {
+      if (this.lit[i] || !this.touches([ln.x, ln.y], LANTERN_R)) return;
+      this.lit[i] = true;
+      const body = this.gateBodies[ln.gate];
+      if (body && !this.gateOpen[ln.gate]) {
+        this.gateOpen[ln.gate] = true;
+        body.collisionFilter.mask = 0;
+        this.walls.delete(body);
+      }
+      this.events.push({ type: 'lantern', index: i, gate: ln.gate });
+    });
+  }
+
+  /** Does any part of the car (chassis box, Lumi, wheels) touch a circle at p of radius R. */
+  touches(p: Pt, R: number) {
+    const t = this.tune;
+    const c = this.chassis;
+    const cos = Math.cos(-c.angle);
+    const sin = Math.sin(-c.angle);
+    const dx = p[0] - c.position.x;
+    const dy = p[1] - c.position.y;
+    const lx = dx * cos - dy * sin;
+    const ly = dx * sin + dy * cos;
+    const bx = Math.max(-t.chassisW / 2, Math.min(t.chassisW / 2, lx));
+    const by = Math.max(-t.chassisH / 2, Math.min(t.chassisH / 2, ly));
+    if (Math.hypot(lx - bx, ly - by) < R) return true;
+    // Lumi, the driver, sits on top a little toward the back (same circle as CarView draws).
+    if (Math.hypot(lx - DRIVER.x * this.dir, ly - DRIVER.y) < R + DRIVER.r) return true;
+    return this.wheels.some((w) => Math.hypot(p[0] - w.position.x, p[1] - w.position.y) < R + t.wheelRadius);
   }
 
   /** Steps until the run ends (or maxSteps). */
@@ -357,29 +470,11 @@ export class Sim {
   }
 
   private checkCandies() {
-    const t = this.tune;
-    const c = this.chassis;
-    const cos = Math.cos(-c.angle);
-    const sin = Math.sin(-c.angle);
     const R = 22; // candy box radius
     this.level.candies.forEach((p, i) => {
-      if (this.collected[i]) return;
-      // Candy center in the chassis frame.
-      const dx = p[0] - c.position.x;
-      const dy = p[1] - c.position.y;
-      const lx = dx * cos - dy * sin;
-      const ly = dx * sin + dy * cos;
-      // Chassis box
-      const bx = Math.max(-t.chassisW / 2, Math.min(t.chassisW / 2, lx));
-      const by = Math.max(-t.chassisH / 2, Math.min(t.chassisH / 2, ly));
-      let hit = Math.hypot(lx - bx, ly - by) < R;
-      // Lumi, the driver, sits on top a little toward the back (same circle as CarView draws).
-      if (!hit) hit = Math.hypot(lx - DRIVER.x * this.dir, ly - DRIVER.y) < R + DRIVER.r;
-      if (!hit) hit = this.wheels.some((w) => Math.hypot(p[0] - w.position.x, p[1] - w.position.y) < R + t.wheelRadius);
-      if (hit) {
-        this.collected[i] = true;
-        this.events.push({ type: 'candy', index: i });
-      }
+      if (this.collected[i] || !this.touches(p, R)) return;
+      this.collected[i] = true;
+      this.events.push({ type: 'candy', index: i });
     });
   }
 
@@ -388,6 +483,19 @@ export class Sim {
     const c = this.chassis;
     const { house } = this.level;
     if (Math.abs(c.position.x - house.x) < 34 && c.position.y > house.y - 90 && c.position.y < house.y + 4) return this.finish('win');
+    for (const bat of this.level.bats ?? []) if (this.touches(batPos(bat, this.time), BAT_R)) return this.finish('bat');
+    // A gap is a hole, and so is a ghost plank: once the car drops through its line it has fallen,
+    // even if a road or a patch further down would catch it (no shortcuts through the levels below).
+    for (let i = 0; i < this.holes.length; i++) {
+      const g = this.holes[i];
+      const depth = this.gapDepth(g);
+      const below = depth > 0;
+      const inside = c.position.x > Math.min(g.a[0], g.b[0]) && c.position.x < Math.max(g.a[0], g.b[0]);
+      if (below && !this.gapBelow[i] && inside) this.gapIn[i] = true;
+      if (!below) this.gapIn[i] = false;
+      this.gapBelow[i] = below;
+      if (this.gapIn[i] && depth > t.gapFallDepth) return this.finish('fall');
+    }
     if (c.position.y > 1280 + 80 || c.position.x < -140 || c.position.x > 860) return this.finish('fall');
     const angle = Math.atan2(Math.sin(c.angle), Math.cos(c.angle));
     this.flipCount = Math.abs(angle) > (100 * Math.PI) / 180 ? this.flipCount + 1 : 0;
@@ -410,6 +518,15 @@ export class Sim {
       if (maxX - minX < t.stuckBox && maxY - minY < t.stuckBox) return this.finish('stuck');
     }
     if (this.steps >= t.maxSteps) return this.finish('timeout');
+  }
+
+  /** How far the chassis center is below a gap's line (negative above), at the closest x on the line. */
+  private gapDepth(g: { a: Pt; b: Pt }) {
+    const c = this.chassis.position;
+    const [l, r] = g.a[0] < g.b[0] ? [g.a, g.b] : [g.b, g.a];
+    const x = Math.max(l[0], Math.min(r[0], c.x));
+    const f = r[0] > l[0] ? (x - l[0]) / (r[0] - l[0]) : 0;
+    return c.y - (l[1] + (r[1] - l[1]) * f);
   }
 
   private finish(outcome: Outcome) {

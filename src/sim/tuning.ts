@@ -41,6 +41,8 @@ export const TUNING = {
   /** Stuck: the chassis stayed inside a stuckBox square for stuckSteps steps (2.5 s). */
   stuckSteps: 150,
   stuckBox: 90,
+  /** A car that drops through a gap's line and gets this far below it has fallen (gaps are holes). */
+  gapFallDepth: 120,
   maxSteps: 40 * 60,
 } as const;
 

@@ -39,9 +39,54 @@ export interface GapDef {
   /** Road edges on each side of the gap. The dotted hint joins them. */
   a: Pt;
   b: Pt;
+  /**
+   * A way the player may bridge but does not have to (a fork to a candy route). Drawn as a hint, but
+   * it is not a hole: the car may drop past it to the road below.
+   */
+  optional?: boolean;
 }
 
-export type TutorialKind = 'draw' | 'multi' | 'candy' | 'par' | 'jump' | 'ghost';
+/**
+ * Bat (from level 8): flies back and forth between a and b at a steady speed and sends the car home
+ * with a "Boo!" when it touches it. Ink does not stop it. Like ghost planks, the flight restarts at
+ * GO, so the run never depends on when GO is pressed (brief 3.1, line 4).
+ */
+export interface BatDef {
+  a: Pt;
+  b: Pt;
+  /** Units per second. */
+  speed: number;
+  /** Seconds already into the flight at GO (0 = at a, heading for b). */
+  offset?: number;
+}
+
+/** Bounce pumpkin (from level 12): sits on a road at x, y and throws the car up when it touches it. */
+export interface PumpkinDef {
+  x: number;
+  /** Road surface the pumpkin sits on. */
+  y: number;
+  /** Upward speed it gives the car, units per second (default 560: the car rises about 370). */
+  power?: number;
+  /** Forward speed it gives the car, units per second (default 100: it lands about 220 ahead on a road 220 higher). */
+  push?: number;
+}
+
+/** Mirror pair (from level 15): the car drives into mirror a and comes out of mirror b, same speed. */
+export interface MirrorDef {
+  /** Entry mirror: x and the road surface it stands on. */
+  a: Pt;
+  /** Exit mirror: x and the surface it stands on (or the spot in the air the car appears at). */
+  b: Pt;
+}
+
+/** Lantern (from level 17): hangs at x, y; when the car touches it, gate number `gate` opens. */
+export interface LanternDef {
+  x: number;
+  y: number;
+  gate: number;
+}
+
+export type TutorialKind = 'draw' | 'multi' | 'candy' | 'par' | 'jump' | 'ghost' | 'fog' | 'bat' | 'bounce' | 'mirror' | 'lantern';
 
 export interface LevelDef {
   id: number;
@@ -55,6 +100,14 @@ export interface LevelDef {
   blocks: BlockDef[];
   gaps: GapDef[];
   candies: Pt[];
+  /** Ghost fog (from level 6): ink cannot be drawn inside. The car drives through it. */
+  fog?: RectDef[];
+  bats?: BatDef[];
+  pumpkins?: PumpkinDef[];
+  mirrors?: MirrorDef[];
+  lanterns?: LanternDef[];
+  /** Iron gates: solid, and turn the car like a wall, until their lantern is lit. Then they open. */
+  gates?: RectDef[];
   /** Ink budget B and par T, in field units of line length. */
   ink: { budget: number; par: number };
   /**
