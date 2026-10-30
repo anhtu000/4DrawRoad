@@ -27,7 +27,7 @@ import type { LevelDef, Pt } from '../src/logic/types.ts';
 import { LEVELS } from '../src/levels/index.ts';
 import { Sim, type SimResult } from '../src/sim/sim.ts';
 import { Matter } from './matter.ts';
-import { drawLines, findCheapest, robustWin, runLines, shake } from './search.ts';
+import { drawLines, findCheapest, robustWin, runLines, shake, shakeWins } from './search.ts';
 
 /** B/T per level, from the v0 level table (section 6.2). */
 const RATIO: Record<number, number> = {
@@ -189,8 +189,11 @@ for (const level of LEVELS) {
   let found: { lines: Pt[][]; ink: number } | null = null;
   // Cheapest levels: par may only rest on a win that survives the full noise test.
   const sturdy = level.parRule === 'cheapest' ? (lines: Pt[][]) => noiseWins(level, lines, AMP.cheapest).candyWins >= BEST_NOISE_WINS : undefined;
+  // Cheapest levels: a quick win rate first (16 of 20 shaken copies), then the full 100-run test.
+  // With +-6 shake even the reference loses now and then, so "every copy wins" would be too strict.
+  const quick = level.parRule === 'cheapest' ? (lines: Pt[][]) => shakeWins(level, lines, true, 20, AMP.cheapest) >= 16 : undefined;
   for (const seed of seeds) {
-    const r = findCheapest(level, true, seed, 3, SEEDS[level.parRule], sturdy, AMP[level.parRule]);
+    const r = findCheapest(level, true, seed, 3, SEEDS[level.parRule], sturdy, AMP[level.parRule], quick);
     if (r && (!found || r.ink < found.ink)) found = r;
   }
   // Cheapest levels: keep going from the cheapest so far until it stops improving, so --fix and a
@@ -199,7 +202,7 @@ for (const level of LEVELS) {
   // 35-degree climb a line with several 20-40 unit holes still wins, at about half the ink; it still
   // only earns the same 3 stars, so it is noted in the report rather than failed here).
   for (let round = 0; found && level.parRule === 'cheapest' && round < 6; round++) {
-    const r = findCheapest(level, true, found.lines, 3, SEEDS[level.parRule], sturdy, AMP[level.parRule]);
+    const r = findCheapest(level, true, found.lines, 3, SEEDS[level.parRule], sturdy, AMP[level.parRule], quick);
     if (!r || r.ink >= found.ink - 0.5) break;
     found = r;
   }
@@ -210,7 +213,7 @@ for (const level of LEVELS) {
     else console.log(`  ok   no leak: cheapest found ${found ? found.ink.toFixed(0) : '-'} ink (${found ? ((found.ink / used) * 100).toFixed(0) : '-'}% of the reference, limit ${LEAK * 100}%)`);
   } else {
     const stored = level.best ? runLines(level, level.best) : null;
-    const storedOk = !!stored && stored.result.outcome === 'win' && stored.result.candies.length === level.candies.length && robustWin(level, level.best!, true, SEEDS.cheapest, AMP.cheapest);
+    const storedOk = !!stored && stored.result.outcome === 'win' && stored.result.candies.length === level.candies.length && quick!(level.best!);
     const storedInk = storedOk ? stored!.ink : Infinity;
     if (found && found.ink < storedInk - 1) {
       if (fix) {

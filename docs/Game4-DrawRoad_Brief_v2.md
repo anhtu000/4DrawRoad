@@ -181,7 +181,7 @@ Kết quả đo (mức chuẩn, số lần thắng có nhiễu, kiểm trên tr�
 
 - **Chỗ đứt là hố.** Xe rơi qua đường nối hai mép của một chỗ đứt rồi xuống sâu hơn 120 đơn vị là thua ("Fell off the road"), kể cả khi bên dưới có đường hoặc nét mực. Ván ma cũng tính là hố. Lý do: màn nhiều tầng xếp chồng, xe rơi qua chỗ đứt tầng trên hay đáp xuống cầu người chơi vẽ ở tầng dưới, thành lối tắt. Luật này còn làm lượt thua kết thúc sớm hơn (không phải chờ xe rơi khỏi màn hình). Sáu màn cũ vẫn qua levelcheck, kết quả thắng không đổi.
 - **Chỗ đứt tuỳ chọn** (`optional`): có viền chấm nhưng không phải hố, dùng cho ngã rẽ lên tuyến kẹo (màn 7). Xe được rơi qua để đi tuyến dưới.
-- Từ màn 4 mức chuẩn tính theo cách ít mực nhất (quyết định 22/10), nên màn mới đều dùng luật `cheapest`.
+- Từ màn 4 mức chuẩn tính theo cách ít mực nhất (quyết định 22/10), nên màn mới đều dùng luật `cheapest`. Từ 30/10 (người dùng chọn), "cách ít mực nhất" phải thắng đủ kẹo khi mỗi điểm của nét lệch tới ±6 đơn vị (khoảng 3–4 px trên điện thoại), ít nhất 80/100 lần; trước đó chỉ ±2 và cách rẻ nhất là những mẩu mực cần chính xác từng điểm ảnh.
 
 ### 7.2 Năm cơ chế mới
 

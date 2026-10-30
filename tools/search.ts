@@ -58,6 +58,13 @@ export function robustWin(level: LevelDef, lines: Pt[][], needCandy: boolean, se
   return true;
 }
 
+/** How many of `n` shaken copies (every point moved up to `amp` units) win. */
+export function shakeWins(level: LevelDef, lines: Pt[][], needCandy: boolean, n: number, amp: number) {
+  let wins = 0;
+  for (let k = 1; k <= n; k++) if (good(level, shake(lines, 7919 * k, amp), needCandy)) wins++;
+  return wins;
+}
+
 function lengthOf(line: Pt[]) {
   let sum = 0;
   for (let i = 1; i < line.length; i++) sum += Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
@@ -133,9 +140,12 @@ export function findCheapest(
   accept: (lines: Pt[][]) => boolean = () => true,
   /** Hand shake of the shaken copies, units per point. */
   amp = 2,
+  /** Replaces the all-copies-win test (robustWin) with another one, for example a win rate. */
+  robust?: (lines: Pt[][]) => boolean,
 ): SearchResult | null {
   let tried = 0;
-  if (!robustWin(level, start, needCandy, seeds, amp)) return null;
+  const isRobust = robust ?? ((lines: Pt[][]) => robustWin(level, lines, needCandy, seeds, amp));
+  if (!good(level, start, needCandy) || !isRobust(start)) return null;
   // Every line slot holds one or two lines.
   let slots: Pt[][][] = start.map((l) => [l]);
   const flat = (s: Pt[][][]) => s.flat().filter((l) => l.length >= 2);
@@ -150,7 +160,7 @@ export function findCheapest(
         tried++;
         if (ink >= best - 0.5) continue;
         if (result.outcome !== 'win' || (needCandy && result.candies.length < level.candies.length)) continue;
-        if (!robustWin(level, lines, needCandy, seeds, amp) || !accept(lines)) continue;
+        if (!isRobust(lines) || !accept(lines)) continue;
         best = ink;
         slots = trial;
         improved = true;
