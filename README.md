@@ -17,9 +17,10 @@ Puzzle vẽ đường bằng mực, thế giới ma dễ thương, đi đường
 | `npm run build:single` | Build web rồi gộp thành một file HTML để thử trên điện thoại: `dist/single/GhostInkRoad_PhoneTest_v1.html` |
 | `npm run build:web` | Build web vào `dist/web` |
 | `npm run build` | Build Poki vào `dist/poki` (chưa dùng ở bản thử) |
-| `npm run levelcheck` | Kiểm mọi màn bằng đúng vật lý của game, gồm cả tìm cách rẻ nhất (xem dưới; 20 màn mất khoảng nửa giờ). Thêm `-- --fix` để ghi lại T, B và `best` vào file màn, `-- 4 5` để chỉ kiểm vài màn, `-- --trace 5` để in đường đi của xe ở màn 5 |
+| `npm run levelcheck` | Kiểm mọi màn bằng đúng vật lý của game, gồm cả tìm cách rẻ nhất (xem dưới; 20 màn mất khoảng 40 phút). Thêm `-- --fix` để ghi lại T, B và `best` vào file màn, `-- 4 5` để chỉ kiểm vài màn, `-- --trace 5` để in đường đi của xe ở màn 5 |
 | `npm run cheapest` | Tìm cách thắng rẻ mực nhất cho từng màn (cắt bớt nét, dốc ngắn ở mép) để kiểm mức chuẩn T có quá dễ không. Chạy vài phút |
 | `npm run levelmap -- 6 7` | Ảnh bản đồ màn vào `.levelmaps/`: mọi vật trong màn, lời giải mẫu (tím) và cách rẻ nhất (vàng) cùng đường đi của xe và các sự kiện. Thêm `--file nhap.json` để xem một màn nháp |
+| `python3 tools/playbot.py --url <link> --size 412x915 --out <thư mục>` | Bot trình duyệt chơi từng màn bằng chuột thật (vẽ lời giải mẫu, hoặc `--best` cho cách rẻ nhất), chụp ảnh và ghi kết quả vào `summary.json`. Cần build web và chạy một server tĩnh trước (xem đầu file) |
 | `npm run tune` | Đo xe so với mục tiêu: tốc độ, dốc leo được, quãng bay, rơi tầng, độ êm trên nét mực |
 | `npm run typecheck` | Kiểm lỗi TypeScript |
 | `npm test` | Test của bộ khung |

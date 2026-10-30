@@ -1,6 +1,6 @@
 # Game #4 – Kết quả đo v5
 
-v5, 28/10/2026 (tối): bước 2, đủ 20 màn (mục 14). Mục 1–13 giữ như v4.
+v5, 28–30/10/2026: bước 2, đủ 20 màn (mục 14), kiểm xong ngày 30/10. Mục 1–13 giữ như v4.
 
 v4, 28/10/2026: kết quả chơi thử đợt 2 trên bản v3 (mục 13), lỗi đo thời gian vẽ (mục 13.3), vì sao xe kẹt (mục 13.4). Mục 1–12 giữ như v3.
 
@@ -354,7 +354,7 @@ Nhật ký không ghi nét vẽ, nên không chạy lại được đúng lượ
   2. Khi xe đứng lại trên nét dốc hơn sức leo, báo "Too steep!" và nháy đoạn dốc đó, thay cho "Got stuck".
 - Sau đợt người mới: quyết định có giảm độ dốc màn 1 hay tăng sức leo của xe (cả hai đều phải chạy lại kiểm rò), và chọn cách dạy ở màn 4.
 
-## 14. Bước 2: đủ 20 màn (28/10)
+## 14. Bước 2: đủ 20 màn (28–30/10)
 
 Người dùng cho làm bước 2 ngày 28/10, trước khi bước 1 đạt đủ H1–H7. Đặc tả: `docs/Game4-DrawRoad_Brief_v2.md` mục 7 (5 cơ chế mới, luật "chỗ đứt là hố", bảng 20 màn, lệch so với v0).
 
@@ -368,34 +368,40 @@ Người dùng cho làm bước 2 ngày 28/10, trước khi bước 1 đạt đ�
 - Công cụ `npm run levelmap`: ảnh bản đồ màn có đường đi của xe, dùng để dựng và soát màn.
 - Levelcheck thêm: màn 14 và 20 nối thẳng phải thua; kiểm riêng từng màn cho bài học chính (bảng ở 14.3).
 
-### 14.2 Mức chuẩn sau `levelcheck --fix`
+### 14.2 Kiểm toàn bộ (30/10)
 
-Lời giải mẫu là cách dễ thấy; "cách rẻ nhất" là lời giải ít mực nhất mà công cụ tìm được, vẫn thắng đủ kẹo khi có nhiễu. T = cách rẻ nhất × 1,1.
+- `npm run levelcheck` cả 20 màn: đạt mọi kiểm (sau `--fix`). Lời giải mẫu thắng 100/100 lần với nhiễu ±2 ở mọi màn.
+- Bot trình duyệt (`tools/playbot.py`, chuột thật, Chromium SwiftShader) vẽ lời giải mẫu: thắng cả 20 màn, đủ kẹo, ở màn dọc 412×915 và màn ngang 1280×720; không lỗi console. Màn 1–3 được 3 sao, màn 4–20 được 1 sao (đúng luật: lời giải dễ thấy tốn mực).
+- Bot vẽ "cách rẻ nhất" (mốc tính T) lần đầu: 9/17 màn thua. Hai nguyên nhân, đã sửa:
+  1. Công cụ hút đầu nét dễ hơn game: công cụ hút khi đầu nét cách mép đường tới 18 đơn vị, game chỉ hút khi điểm sau khi hút cách đầu nét không quá 18 (tức đầu nét chỉ được cao hơn mép đường khoảng 11). Đuôi nét trong game được nối thêm tới điểm hút, công cụ thì dời điểm cuối. Nay công cụ làm đúng như game.
+  2. Cách rẻ nhất cũ chỉ phải chịu tay run ±2 đơn vị, nên là những mẩu mực cần chính xác từng điểm ảnh. Người dùng chọn ngày 30/10: cách rẻ nhất phải thắng đủ kẹo ít nhất 80/100 lần khi mỗi điểm lệch tới ±6 (khoảng 3–4 px trên điện thoại).
+- Sau khi sửa, bot vẽ cách rẻ nhất thắng 10/17 màn (4, 5, 6, 7, 9, 12, 14, 15, 17, 20); 7 màn còn lại thua vì lệch khoảng một điểm ảnh. Điều này khớp với con số 80/100: cách rẻ nhất vẫn sát giới hạn. Người chơi không cần đúng cách đó, chỉ cần dưới ngưỡng 3 sao.
+- Màn 14: cú hất của bí ngô rút ngắn (tới 160 → 140) vì cú hất cũ đáp sát mép vực, đôi khi không cần vẽ đoạn hứng.
+- Màn 14, 16, 18, 20 dời xuống 40 đơn vị để kẹo trên cùng không nằm dưới thanh tiêu đề.
+
+### 14.3 Mức chuẩn mới (luật `cheapest`, sau sửa)
 
 | Màn | Lời giải mẫu (mực) | Cách rẻ nhất (mực) | T | B |
 | --- | --- | --- | --- | --- |
-| 6 | 934 | 500 | 550 | 1100 |
-| 7 | 795 | 430 | 473 | 914 |
-| 8 | 1006 | 331 | 364 | 1157 |
-| 9 | 843 | 395 | 434 | 969 |
-| 11 | 1147 | 235 | 258 | 1319 |
-| 12 | 274 | 51 | 57 | 315 |
-| 13 | 548 | 102 | 112 | 630 |
-| 14 | 1058 | 375 | 413 | 1216 |
-| 15 | 599 | 69 | 76 | 688 |
-| 16 | 747 | 247 | 272 | 859 |
-| 17 | 646 | 191 | 210 | 743 |
-| 18 | 1060 | 383 | 421 | 1220 |
-| 19 | 726 | 202 | 222 | 835 |
-| 20 | 1291 | 453 | 498 | 1485 |
+| 4 | 414 | 48 | 52 | 476 |
+| 5 | 442 | 107 | 118 | 508 |
+| 6 | 934 | 494 | 543 | 1086 |
+| 7 | 845 | 491 | 541 | 972 |
+| 8 | 1006 | 570 | 627 | 1191 |
+| 9 | 843 | 387 | 426 | 969 |
+| 10 | 609 | 70 | 77 | 700 |
+| 11 | 1147 | 252 | 277 | 1319 |
+| 12 | 274 | 125 | 138 | 315 |
+| 13 | 548 | 121 | 133 | 630 |
+| 14 | 1105 | 435 | 479 | 1271 |
+| 15 | 599 | 123 | 136 | 688 |
+| 16 | 747 | 279 | 307 | 859 |
+| 17 | 646 | 281 | 309 | 743 |
+| 18 | 1060 | 412 | 453 | 1220 |
+| 19 | 726 | 182 | 200 | 835 |
+| 20 | 1291 | 519 | 571 | 1485 |
 
-Mọi màn mới qua các kiểm của levelcheck trong hai lượt `--fix` (màn 8, 9, 13 chạy lại sau khi sửa). Sau đó màn 14, 16, 18, 20 được dời xuống 40 đơn vị để kẹo trên cùng không bị thanh tiêu đề che; vật lý không đổi theo phép dời, đã chạy lại lời giải mẫu và nhiễu (40/40) cho 4 màn này.
-
-### 14.3 Chưa làm xong (dừng ngày 29/10 theo yêu cầu người dùng)
-
-- Chưa chạy lại `npm run levelcheck` cho cả 20 màn một lượt (mất khoảng 30 phút).
-- Chưa chạy bot trình duyệt cho 20 màn (lượt chạy bị dừng giữa chừng). Ảnh chụp màn 6, 8, 12, 15, 16, 17, 18, 20 trên trình duyệt không có lỗi console.
-- Bản thử điện thoại `builds/GhostInkRoad_PhoneTest_v4.html` đã build (1,87 MB) nhưng chưa kiểm bằng bot, chưa đăng lên artifact.
+Màn 1–3 (luật vá kín) giữ T 211, 336, 285; cách rẻ nhất tìm được 70%, 70%, 73% lời giải mẫu (giới hạn rò 65%).
 
 ### 14.4 Kiểm riêng từng màn trong levelcheck
 
@@ -412,7 +418,7 @@ Màn 6: nối thẳng bị sương cắt nên thua. Màn 7: đi tuyến dưới 
 
 ## 15. Nguồn
 
-- Bước 2 (mục 14): `npm run levelcheck -- --fix` ngày 28–29/10, `tools/levelmap.ts`, ảnh chụp trình duyệt Chromium (SwiftShader) khung 412×915.
+- Bước 2 (mục 14): `npm run levelcheck -- --fix` ngày 28–30/10, `tools/levelmap.ts`, `tools/playbot.py` (Chromium SwiftShader, khung 412×915 và 1280×720).
 
 - Đợt 2 (mục 13): nhật ký người dùng gửi ngày 28/10; phép thử nét vồng chạy bằng `tools/search.ts` (`runLines`) với vật lý của bản v3; ngưỡng sao tính bằng `starLimits` trong `src/logic/score.ts`.
 - Đo bằng `npm run levelcheck` (bản 22/10 có tìm cách rẻ nhất), `npm run tune`, `npm run cheapest` (22/10) và script đo trọng lực, nhiễu trong lần kiểm này; nhật ký chơi thử người dùng gửi ngày 22/10; bot Playwright (Chromium, SwiftShader) ở khung 412×915 (dọc), 1280×720 (ngang), 390×844 (cảm ứng).
