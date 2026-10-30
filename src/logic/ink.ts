@@ -150,15 +150,15 @@ export function inkUsed(strokes: Pt[][]): number {
 }
 
 /**
- * Applies the drawing rules to an authored line (level solutions, tools): the ends snap like a
- * finger's would, forbidden parts are cut out, and each part is smoothed.
+ * Applies the drawing rules to an authored line (level solutions, tools), the same way PlayScene does
+ * for a finger: the start snaps to a road or a stroke end when the snapped point is within the snap
+ * radius, forbidden parts are cut out, and when the line ends the last part is extended to a snap
+ * point within the radius if the way there is allowed. Each part is smoothed.
  */
 export function drawLike(line: Pt[], zones: InkZones, existing: Pt[][] = []): Pt[][] {
   const pts = line.map((p) => [p[0], p[1]] as Pt);
   const s0 = snapPoint(pts[0], zones, existing);
-  if (s0) pts[0] = s0;
-  const s1 = snapPoint(pts[pts.length - 1], zones, existing);
-  if (s1) pts[pts.length - 1] = s1;
+  if (s0 && dist(s0, pts[0]) <= INK.snapRadius) pts[0] = s0;
   // Densify like a finger would (a point every few units), so cutting works the same way.
   const dense: Pt[] = [pts[0]];
   for (let i = 1; i < pts.length; i++) {
@@ -167,5 +167,17 @@ export function drawLike(line: Pt[], zones: InkZones, existing: Pt[][] = []): Pt
     const n = Math.max(1, Math.ceil(dist(a, b) / INK.minSpacing));
     for (let k = 1; k <= n; k++) dense.push([a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n]);
   }
-  return cutLine(dense, zones).map(finishStroke);
+  const parts = cutLine(dense, zones);
+  const lastPart = parts[parts.length - 1];
+  if (lastPart) {
+    const end = lastPart[lastPart.length - 1];
+    const s1 = snapPoint(end, zones, [...existing, ...parts.slice(0, -1)]);
+    if (s1 && dist(s1, end) > 0.01 && dist(s1, end) <= INK.snapRadius) {
+      const n = Math.max(1, Math.ceil(dist(end, s1) / 3));
+      let ok = true;
+      for (let k = 1; k <= n && ok; k++) ok = !forbidden([end[0] + ((s1[0] - end[0]) * k) / n, end[1] + ((s1[1] - end[1]) * k) / n], zones);
+      if (ok) lastPart.push(s1);
+    }
+  }
+  return parts.map(finishStroke);
 }

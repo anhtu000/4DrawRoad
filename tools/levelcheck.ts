@@ -10,7 +10,7 @@
 //   7. par and budget, by the level's rule:
 //      patch     T = reference x 1.1, B = T x ratio. Fails when the cheapest win found
 //                (tools/search.ts) costs less than LEAK of the reference: the level leaks.
-//      cheapest  T = cheapest robust all-candy win x 1.1 (stored as `best`), B = the larger of
+//      cheapest  T = cheapest all-candy win that survives +-6 hand shake x 1.1 (stored as `best`), B = the larger of
 //                T x ratio and reference x 1.15, so the obvious solution always fits. Fails when
 //                the search finds something cheaper than `best` (run --fix), or `best` is fragile.
 //   8. extra checks per level (below)
@@ -40,10 +40,16 @@ const PEAKS = [14, 20];
 const LEAK = 0.65;
 /** Cheapest levels: the budget leaves this much room over the obvious solution. */
 const OBVIOUS_ROOM = 1.15;
-/** Cheapest levels: `best` must win this often with +-2 noise (it is leaner than the reference). */
-const BEST_NOISE_WINS = 90;
+/**
+ * Cheapest levels: `best` must win this often out of 100 with +-6 units of shake on every point
+ * (about 3-4 px on a phone). With +-2 the cheapest wins were pixel-perfect tricks that a bot drawing
+ * through the real pointer could not repeat (30/10, report v5 section 14).
+ */
+const BEST_NOISE_WINS = 80;
 /** Shaken copies a candidate must also win in the search: 4 for the leak check, more for `best`. */
 const SEEDS = { patch: 4, cheapest: 12 } as const;
+/** Hand shake for the search, units per point: the leak check keeps +-2, par on cheapest levels +-6. */
+const AMP = { patch: 2, cheapest: 6 } as const;
 
 interface Extra {
   name: string;
@@ -91,11 +97,11 @@ const only = args.filter((a, i) => /^\d+$/.test(a) && args[i - 1] !== '--trace')
 const describe = (r: SimResult, level: LevelDef) => `${r.outcome} in ${(r.steps / 60).toFixed(1)} s, candy ${r.candies.length}/${level.candies.length}`;
 const fileOf = (level: LevelDef) => fileURLToPath(new URL(`../src/levels/${String(level.id).padStart(2, '0')}.json`, import.meta.url));
 
-function noiseWins(level: LevelDef, lines: Pt[][]) {
+function noiseWins(level: LevelDef, lines: Pt[][], amp = 2) {
   let wins = 0;
   let candyWins = 0;
   for (let i = 0; i < 100; i++) {
-    const r = runLines(level, shake(lines, 1000 + i * 37)).result;
+    const r = runLines(level, shake(lines, 1000 + i * 37, amp)).result;
     if (r.outcome === 'win') wins++;
     if (r.outcome === 'win' && r.candies.length === level.candies.length) candyWins++;
   }
@@ -182,9 +188,9 @@ for (const level of LEVELS) {
   const seeds = [level.solution, ...(level.best ? [level.best] : []), ...(level.alt ?? [])];
   let found: { lines: Pt[][]; ink: number } | null = null;
   // Cheapest levels: par may only rest on a win that survives the full noise test.
-  const sturdy = level.parRule === 'cheapest' ? (lines: Pt[][]) => noiseWins(level, lines).candyWins >= BEST_NOISE_WINS : undefined;
+  const sturdy = level.parRule === 'cheapest' ? (lines: Pt[][]) => noiseWins(level, lines, AMP.cheapest).candyWins >= BEST_NOISE_WINS : undefined;
   for (const seed of seeds) {
-    const r = findCheapest(level, true, seed, 3, SEEDS[level.parRule], sturdy);
+    const r = findCheapest(level, true, seed, 3, SEEDS[level.parRule], sturdy, AMP[level.parRule]);
     if (r && (!found || r.ink < found.ink)) found = r;
   }
   // Cheapest levels: keep going from the cheapest so far until it stops improving, so --fix and a
@@ -193,7 +199,7 @@ for (const level of LEVELS) {
   // 35-degree climb a line with several 20-40 unit holes still wins, at about half the ink; it still
   // only earns the same 3 stars, so it is noted in the report rather than failed here).
   for (let round = 0; found && level.parRule === 'cheapest' && round < 6; round++) {
-    const r = findCheapest(level, true, found.lines, 3, SEEDS[level.parRule], sturdy);
+    const r = findCheapest(level, true, found.lines, 3, SEEDS[level.parRule], sturdy, AMP[level.parRule]);
     if (!r || r.ink >= found.ink - 0.5) break;
     found = r;
   }
@@ -204,7 +210,7 @@ for (const level of LEVELS) {
     else console.log(`  ok   no leak: cheapest found ${found ? found.ink.toFixed(0) : '-'} ink (${found ? ((found.ink / used) * 100).toFixed(0) : '-'}% of the reference, limit ${LEAK * 100}%)`);
   } else {
     const stored = level.best ? runLines(level, level.best) : null;
-    const storedOk = !!stored && stored.result.outcome === 'win' && stored.result.candies.length === level.candies.length && robustWin(level, level.best!, true, SEEDS.cheapest);
+    const storedOk = !!stored && stored.result.outcome === 'win' && stored.result.candies.length === level.candies.length && robustWin(level, level.best!, true, SEEDS.cheapest, AMP.cheapest);
     const storedInk = storedOk ? stored!.ink : Infinity;
     if (found && found.ink < storedInk - 1) {
       if (fix) {
@@ -221,9 +227,9 @@ for (const level of LEVELS) {
       console.log(`  ok   best: ${storedInk.toFixed(0)} ink, nothing cheaper found`);
     } else fail('no robust cheap win found');
     if (bestLines) {
-      const n = noiseWins(level, bestLines);
-      if (n.candyWins < BEST_NOISE_WINS) fail(`best is fragile: noise +-2 won ${n.wins}/100, all candy ${n.candyWins}/100`);
-      else console.log(`  ok   best with noise +-2: won ${n.wins}/100, all candy ${n.candyWins}/100`);
+      const n = noiseWins(level, bestLines, AMP.cheapest);
+      if (n.candyWins < BEST_NOISE_WINS) fail(`best is fragile: noise +-6 won ${n.wins}/100, all candy ${n.candyWins}/100`);
+      else console.log(`  ok   best with noise +-6: won ${n.wins}/100, all candy ${n.candyWins}/100`);
     }
     par = Math.round(bestInk * 1.1);
     budget = Math.max(Math.round(par * ratio), Math.round(used * OBVIOUS_ROOM));

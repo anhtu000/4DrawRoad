@@ -3,7 +3,8 @@
 // either end, split with a hole in the middle, or replaced by a short ramp or pad at either end.
 // Coordinate descent over the lines, a few passes. A candidate only counts when it also wins with a
 // little hand shake (ROBUST_SEEDS runs with +-2 units of noise per point), so par never rests on a
-// pixel-perfect trick.
+// pixel-perfect trick. levelcheck asks for more shake (+-6) on levels whose par comes from the
+// cheapest win: a phone finger is not more precise than that (decision 30/10).
 //
 // Used by tools/levelcheck.ts (leak check on "patch" levels, par on "cheapest" levels) and by
 // tools/cheapest.ts. The result is an upper bound: a player can still find something cheaper.
@@ -50,10 +51,10 @@ function good(level: LevelDef, lines: Pt[][], needCandy: boolean) {
   return result.outcome === 'win' && (!needCandy || result.candies.length === level.candies.length);
 }
 
-/** Wins as drawn and with a little hand shake (`seeds` shaken copies). */
-export function robustWin(level: LevelDef, lines: Pt[][], needCandy: boolean, seeds = ROBUST_SEEDS) {
+/** Wins as drawn and with hand shake: `seeds` copies with every point moved up to `amp` units. */
+export function robustWin(level: LevelDef, lines: Pt[][], needCandy: boolean, seeds = ROBUST_SEEDS, amp = 2) {
   if (!good(level, lines, needCandy)) return false;
-  for (let k = 1; k <= seeds; k++) if (!good(level, shake(lines, 7919 * k), needCandy)) return false;
+  for (let k = 1; k <= seeds; k++) if (!good(level, shake(lines, 7919 * k, amp), needCandy)) return false;
   return true;
 }
 
@@ -130,9 +131,11 @@ export function findCheapest(
   seeds = ROBUST_SEEDS,
   /** Extra test for a cheaper candidate that already passed the shaken copies (for example a full noise test). */
   accept: (lines: Pt[][]) => boolean = () => true,
+  /** Hand shake of the shaken copies, units per point. */
+  amp = 2,
 ): SearchResult | null {
   let tried = 0;
-  if (!robustWin(level, start, needCandy, seeds)) return null;
+  if (!robustWin(level, start, needCandy, seeds, amp)) return null;
   // Every line slot holds one or two lines.
   let slots: Pt[][][] = start.map((l) => [l]);
   const flat = (s: Pt[][][]) => s.flat().filter((l) => l.length >= 2);
@@ -147,7 +150,7 @@ export function findCheapest(
         tried++;
         if (ink >= best - 0.5) continue;
         if (result.outcome !== 'win' || (needCandy && result.candies.length < level.candies.length)) continue;
-        if (!robustWin(level, lines, needCandy, seeds) || !accept(lines)) continue;
+        if (!robustWin(level, lines, needCandy, seeds, amp) || !accept(lines)) continue;
         best = ink;
         slots = trial;
         improved = true;
